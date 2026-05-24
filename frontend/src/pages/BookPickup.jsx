@@ -55,6 +55,7 @@ const BookPickup = () => {
     const [image, setImage] = useState(null); // {file, url}
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+    const [bookingId, setBookingId] = useState(null);
 
     const min = useMemo(() => today(), []);
     const max = useMemo(() => maxDate(), []);
@@ -92,6 +93,9 @@ const BookPickup = () => {
 
     const confirmBooking = () => {
         setConfirmOpen(false);
+        setBookingId(
+            `BC-${Math.floor(Math.random() * 9000) + 1000}`
+        );
         setSubmitted(true);
         toast.success(
             `Pickup confirmed for ${format(date, "EEE, d MMM")} · ${selectedSlot.range}`
@@ -105,6 +109,7 @@ const BookPickup = () => {
         setNotes("");
         clearImage();
         setSubmitted(false);
+        setBookingId(null);
     };
 
     // Success state
@@ -119,7 +124,7 @@ const BookPickup = () => {
                         <Check size={26} />
                     </div>
                     <p className="mt-6 font-mono-label text-xs text-[#F7F5F0]/70">
-                        Booking #BC-{Math.floor(Math.random() * 9000) + 1000}
+                        Booking #{bookingId}
                     </p>
                     <h2 className="mt-3 font-display font-black tracking-tighter text-4xl sm:text-5xl">
                         Pickup confirmed.
