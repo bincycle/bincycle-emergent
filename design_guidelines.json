@@ -1,0 +1,125 @@
+{
+  "project_name": "Bincycle",
+  "theme": "light",
+  "archetype": "1_organic_earthy_with_brutalist_contrast",
+  "reasoning": "Waste management needs trust, calm, and organic tones (Archetype 1). To elevate Bincycle from a generic 'green' startup to a premium, modern platform, we apply 'Neo-Earthy' aesthetics: high-end editorial typography, rigid bento grids, massive negative space, and tactile, natural colors.",
+  "tech_stack_additions": [
+    "yarn add framer-motion",
+    "yarn add lenis",
+    "yarn add react-fast-marquee",
+    "yarn add @phosphor-icons/react",
+    "yarn add clsx tailwind-merge"
+  ],
+  "important_notes": [
+    "All files must be .jsx or .js, not .tsx.",
+    "Use data-testid attributes on all interactive elements (buttons, inputs, links)."
+  ],
+  "typography": {
+    "headings": {
+      "font_family": "'Cabinet Grotesk', sans-serif",
+      "import_url": "https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@900,800,700,500,400&display=swap",
+      "rules": "Use for all H1-H4. H1 must be massive (text-5xl to text-7xl) with tracking-tighter and font-black for tension."
+    },
+    "body": {
+      "font_family": "'Manrope', sans-serif",
+      "import_url": "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&display=swap",
+      "rules": "Use for dense text, dashboard UI, and paragraphs. text-base or text-lg, leading-relaxed."
+    },
+    "labels": {
+      "font_family": "'JetBrains Mono', monospace",
+      "import_url": "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&display=swap",
+      "rules": "Use for overlines, small badges, and numeric data. uppercase, tracking-[0.2em], text-xs."
+    }
+  },
+  "colors": {
+    "background": {
+      "base": "#F7F5F0",
+      "surface": "#FFFFFF",
+      "dark_section": "#171A15"
+    },
+    "text": {
+      "primary": "#121710",
+      "secondary": "#596155",
+      "inverse": "#F7F5F0"
+    },
+    "brand": {
+      "primary": "#284226",
+      "primary_hover": "#1C2E1A",
+      "accent": "#C45B38",
+      "accent_hover": "#A64A2B"
+    },
+    "border": {
+      "default": "#D1CDBC",
+      "focus": "#284226"
+    }
+  },
+  "layout_spacing": {
+    "philosophy": "Generous Spacing (p-8, p-16, py-32). Do not cramp marketing content.",
+    "marketing_grid": "Mode A: 'Tetris Grid'. 12-column bento, asymmetric spans (e.g., col-span-8 and col-span-4).",
+    "dashboard_grid": "Mode B: 'Control Room'. Dense, functional 1-to-3 columns. Every pixel purposeful."
+  },
+  "components_instructions": {
+    "buttons": {
+      "style": "Brutalist-lite: pure solid background, sharp corners (rounded-sm), text-base font-medium. Hover must explicitly set bg and text color."
+    },
+    "marketing_nav": {
+      "style": "Crystal Glassmorphism: backdrop-blur-xl bg-[#F7F5F0]/70, 1px border-b border-[#D1CDBC]/50, sticky top-0, z-50."
+    },
+    "marquee": {
+      "style": "Editorial Ribbon: Pale surface bg, dark olive text, slow speed, large gaps (gap-24). Monospace or Cabinet Grotesk text."
+    },
+    "shadcn_overrides": {
+      "calendar": "Restrict to next 7 days using max/min dates. Override selected state to use brand.primary (#284226).",
+      "dropdown": "Use for Address Selection in dashboard. Remove default Vercel shadow, use solid 1px border (#D1CDBC).",
+      "cards": "For Time Slots in dashboard. Use HTML/Tailwind standard grid of selectable radio cards, not literal Shadcn Card component if too bulky.",
+      "toast": "Use Sonner for booking confirmation success message."
+    },
+    "image_upload": {
+      "style": "Minimalist dashed border area (border-dashed border-2 border-[#D1CDBC] bg-white). Text: 'Drop image or click to browse'. Preview thumbnail on selection."
+    }
+  },
+  "pages_wireframe_direction": {
+    "/": "Hero: massive text, 'hero_truck' image (no heavy overlay). Editorial Marquee below. How-It-Works bento grid with 'circular_economy_3d'. Testimonials block. CTA with dark_section bg.",
+    "/about": "Story-driven, large text. Incorporate 'eco_texture_bg' subtly. Bento stats.",
+    "/pricing": "3-tier pricing cards. Center 'Most Popular' card slightly elevated, use accent color for its CTA.",
+    "/help": "Minimalist FAQ. Use Shadcn Accordion. Search input prominently at the top.",
+    "/contact": "Two columns: Contact form (Shadcn Input/Textarea) + Office Info/Map.",
+    "/privacy-policy": "Editorial, max-w-3xl, centered, lots of whitespace, typographic hierarchy.",
+    "/terms-of-service": "Editorial, max-w-3xl, centered, lots of whitespace, typographic hierarchy.",
+    "/dashboard/book-pickup": "Sidebar navigation (mock avatar in bottom). Main view: 'Schedule Pickup'. Sections: 1. Address (Dropdown). 2. Date (Shadcn Calendar). 3. Time (Selectable Grid Cards). 4. Notes & Photo (Textarea + File Input). 5. Submit CTA."
+  },
+  "media_urls": {
+    "hero_truck": {
+      "url": "https://static.prod-images.emergentagent.com/jobs/85afc4d7-2033-4a56-a1f2-66a9c918c165/images/47998dda7a2529325f75bee90bda1838bbc45ab787b576520136ca9ea7a216ca.png",
+      "description": "Clean, modern electric garbage truck in a bright neighborhood. Use in landing page hero."
+    },
+    "eco_texture_bg": {
+      "url": "https://static.prod-images.emergentagent.com/jobs/85afc4d7-2033-4a56-a1f2-66a9c918c165/images/ce72d1ba64fbe7066480c12414ff18ecabe93fd1b2c921a71622de61f4c2dab1.png",
+      "description": "Abstract high-end texture. Use as a subtle section background (e.g., About page or CTA block)."
+    },
+    "circular_economy_3d": {
+      "url": "https://static.prod-images.emergentagent.com/jobs/85afc4d7-2033-4a56-a1f2-66a9c918c165/images/50da556fcc7e838a92fee7c764dbcc17001186fd23d77a71fe0f32e49379fc6a.png",
+      "description": "3D geometric composition. Use in feature sections or How-It-Works."
+    },
+    "real_photo_glass": {
+      "url": "https://images.pexels.com/photos/6591167/pexels-photo-6591167.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Glass recycling container. Use for generic imagery if needed."
+    },
+    "real_photo_bins": {
+      "url": "https://images.pexels.com/photos/34406294/pexels-photo-34406294.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Recycling bins. Good for About page or blog visuals."
+    },
+    "avatar_mock": {
+      "url": "https://ui.shadcn.com/avatars/01.png",
+      "description": "Mock user avatar for dashboard sidebar."
+    }
+  },
+  "accessibility": {
+    "test_ids": "All interactive elements, forms, and buttons MUST include data-testid.",
+    "focus": "All focused inputs must ring with border.focus (#284226)."
+  },
+  "motion": {
+    "page_transitions": "Lenis for smooth scroll. Framer motion for fade-in-up on major sections.",
+    "hover_states": "Buttons use crisp background/text color swaps. Dashboard cards elevate slightly (-translate-y-1) on hover."
+  }
+}
