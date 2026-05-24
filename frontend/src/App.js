@@ -1,54 +1,60 @@
-import { useEffect } from "react";
 import "@/App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
+import { Toaster } from "@/components/ui/sonner";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+import MarketingLayout from "@/components/layout/MarketingLayout";
+import DashboardLayout from "@/components/layout/DashboardLayout";
 
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
-
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
-
-  return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
-};
+import Home from "@/pages/Home";
+import About from "@/pages/About";
+import Pricing from "@/pages/Pricing";
+import Help from "@/pages/Help";
+import Contact from "@/pages/Contact";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import TermsOfService from "@/pages/TermsOfService";
+import BookPickup from "@/pages/BookPickup";
 
 function App() {
-  return (
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </div>
-  );
+    return (
+        <div className="App">
+            <BrowserRouter>
+                <Routes>
+                    <Route element={<MarketingLayout />}>
+                        <Route path="/" element={<Home />} />
+                        <Route path="/about" element={<About />} />
+                        <Route path="/pricing" element={<Pricing />} />
+                        <Route path="/help" element={<Help />} />
+                        <Route path="/contact" element={<Contact />} />
+                        <Route
+                            path="/privacy-policy"
+                            element={<PrivacyPolicy />}
+                        />
+                        <Route
+                            path="/terms-of-service"
+                            element={<TermsOfService />}
+                        />
+                    </Route>
+                    <Route element={<DashboardLayout />}>
+                        <Route
+                            path="/dashboard/book-pickup"
+                            element={<BookPickup />}
+                        />
+                    </Route>
+                </Routes>
+            </BrowserRouter>
+            <Toaster
+                position="bottom-right"
+                toastOptions={{
+                    style: {
+                        background: "#171A15",
+                        color: "#F7F5F0",
+                        border: "1px solid #284226",
+                        borderRadius: "4px",
+                    },
+                }}
+            />
+        </div>
+    );
 }
 
 export default App;
