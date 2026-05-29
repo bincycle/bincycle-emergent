@@ -75,3 +75,17 @@ P2
 - Wire backend once user requests.
 - Hook contact form to a real send/email integration.
 - Replace mock user with authenticated session.
+
+## Implemented (2026-02-29) — Auth pages, cookie consent, booking UX upgrades
+- Auth routes added under shared **AuthLayout** (split editorial/form layout, branded photo panel on lg+): `/login`, `/register`, `/forgot-password`, `/reset-password`.
+  - Inline validation, error states, loading spinners, password show/hide, password-strength meter on register + reset, "remember me" + "agree to terms" checkboxes, mocked submit handlers.
+  - Auth pages fully responsive — side panel collapses on small screens.
+- **Cookie consent banner** (`CookieConsent.jsx`) appears on first visit (delayed slide-up via framer-motion), persists `{choice, at}` to `localStorage['bincycle:cookie-consent']`. Buttons: Accept all, Essentials only, Dismiss (=decline). Linked to /privacy-policy.
+- Marketing nav: added **Sign in** link on desktop nav and in the mobile menu.
+- **Book Pickup** updates:
+  - Section order is now **01 Date → 02 Time Slot → 03 Address → 04 Notes → 05 Pictures**.
+  - Notes and Pictures are now **separate cards** with their own headers.
+  - Form draft persistence — every field (date, slot, address, notes, image as base64 dataURL) auto-saves to `localStorage['bincycle:booking:draft']` and rehydrates on page reload.
+  - **Clear draft** button shows when any field is set.
+  - **In-modal success state** after "Confirm pickup": the same Dialog swaps to a green confirmation card showing BC-#### id, the booking summary, and a "What happens next" steps list. No redirect. Closing the modal resets the form for a fresh booking.
+- Testing agent passed 43/44 checks; the single fail was a test-script timing flake (persistence verified manually). Two cosmetic suggestions applied: `DialogTitle` now wraps the visible success heading for a11y, and `ResetPassword` properly renders an invalid-token panel when `?token` is missing.

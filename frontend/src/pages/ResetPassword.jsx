@@ -26,7 +26,7 @@ const STRENGTH_COLOR = [
 const ResetPassword = () => {
     const [params] = useSearchParams();
     const navigate = useNavigate();
-    const token = params.get("token") || "preview-token";
+    const token = params.get("token");
 
     const [form, setForm] = useState({ password: "", confirm: "" });
     const [errors, setErrors] = useState({});
@@ -88,6 +88,31 @@ const ResetPassword = () => {
         );
     }
 
+    if (!token) {
+        return (
+            <div data-testid="reset-invalid-token">
+                <p className="font-mono-label text-xs text-[#596155]">
+                    [ invalid reset link ]
+                </p>
+                <h1 className="mt-4 font-display font-black tracking-tighter text-4xl sm:text-5xl text-[#121710]">
+                    This link is invalid or expired.
+                </h1>
+                <p className="mt-3 text-[#596155] leading-relaxed">
+                    Reset links expire 30 minutes after they're sent. Request a
+                    fresh link to continue.
+                </p>
+                <Link
+                    to="/forgot-password"
+                    data-testid="reset-request-new-link"
+                    className="mt-8 inline-flex items-center justify-center gap-2 rounded-sm bg-[#284226] px-5 py-3.5 text-sm font-medium text-[#F7F5F0] hover:bg-[#1C2E1A] transition-colors w-full"
+                >
+                    Request a new link
+                    <ArrowRight size={16} />
+                </Link>
+            </div>
+        );
+    }
+
     return (
         <div data-testid="reset-password-page">
             <p className="font-mono-label text-xs text-[#596155]">
@@ -100,21 +125,6 @@ const ResetPassword = () => {
                 Choose something memorable — at least 8 characters, with a
                 number or capital letter for good measure.
             </p>
-            {!token && (
-                <div
-                    data-testid="reset-invalid-token"
-                    className="mt-6 rounded-sm border border-[#C45B38] bg-[#C45B38]/10 p-4 text-sm text-[#C45B38]"
-                >
-                    This reset link looks invalid or expired.{" "}
-                    <Link
-                        to="/forgot-password"
-                        className="underline underline-offset-2"
-                    >
-                        Request a new one
-                    </Link>
-                    .
-                </div>
-            )}
 
             <form
                 onSubmit={onSubmit}

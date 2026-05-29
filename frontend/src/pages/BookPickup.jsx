@@ -698,9 +698,6 @@ const BookPickup = () => {
                             className="bg-[#284226] text-[#F7F5F0] p-6 sm:p-8"
                         >
                             <DialogHeader>
-                                <DialogTitle className="sr-only">
-                                    Pickup confirmed
-                                </DialogTitle>
                                 <DialogDescription className="sr-only">
                                     Your pickup booking has been confirmed.
                                 </DialogDescription>
@@ -714,9 +711,9 @@ const BookPickup = () => {
                             >
                                 Booking #{bookingId}
                             </p>
-                            <p className="mt-3 font-display font-black tracking-tighter text-3xl sm:text-4xl">
+                            <DialogTitle className="mt-3 font-display font-black tracking-tighter text-3xl sm:text-4xl text-[#F7F5F0]">
                                 Pickup confirmed.
-                            </p>
+                            </DialogTitle>
                             <p className="mt-4 text-[#F7F5F0]/80 leading-relaxed">
                                 Our partner will arrive on{" "}
                                 <span className="text-[#F7F5F0] font-medium">
