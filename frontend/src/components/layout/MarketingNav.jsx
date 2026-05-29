@@ -41,7 +41,14 @@ export const MarketingNav = () => {
                     ))}
                 </nav>
 
-                <div className="hidden md:block">
+                <div className="hidden md:flex md:items-center md:gap-2">
+                    <Link
+                        to="/login"
+                        data-testid="nav-signin-link"
+                        className="px-3 py-2 text-sm text-[#596155] hover:text-[#121710] transition-colors"
+                    >
+                        Sign in
+                    </Link>
                     <Link
                         to="/dashboard/book-pickup"
                         data-testid="nav-book-pickup-cta"
@@ -90,10 +97,18 @@ export const MarketingNav = () => {
                             </NavLink>
                         ))}
                         <Link
+                            to="/login"
+                            onClick={() => setOpen(false)}
+                            data-testid="nav-mobile-signin"
+                            className="mt-2 inline-flex items-center justify-between rounded-sm border border-[#121710] px-4 py-3 text-sm font-medium text-[#121710] hover:bg-[#121710] hover:text-[#F7F5F0]"
+                        >
+                            Sign in
+                        </Link>
+                        <Link
                             to="/dashboard/book-pickup"
                             onClick={() => setOpen(false)}
                             data-testid="nav-mobile-cta"
-                            className="mt-2 inline-flex items-center justify-between rounded-sm bg-[#C45B38] px-4 py-3 text-sm font-medium text-[#F7F5F0] hover:bg-[#A64A2B]"
+                            className="inline-flex items-center justify-between rounded-sm bg-[#C45B38] px-4 py-3 text-sm font-medium text-[#F7F5F0] hover:bg-[#A64A2B]"
                         >
                             Book a pickup
                             <ArrowUpRight size={16} />

@@ -4,6 +4,8 @@ import { Toaster } from "@/components/ui/sonner";
 
 import MarketingLayout from "@/components/layout/MarketingLayout";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import AuthLayout from "@/components/layout/AuthLayout";
+import CookieConsent from "@/components/CookieConsent";
 
 import Home from "@/pages/Home";
 import About from "@/pages/About";
@@ -13,6 +15,10 @@ import Contact from "@/pages/Contact";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import TermsOfService from "@/pages/TermsOfService";
 import BookPickup from "@/pages/BookPickup";
+import Login from "@/pages/Login";
+import Register from "@/pages/Register";
+import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
 
 function App() {
     return (
@@ -40,7 +46,20 @@ function App() {
                             element={<BookPickup />}
                         />
                     </Route>
+                    <Route element={<AuthLayout />}>
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
+                        <Route
+                            path="/forgot-password"
+                            element={<ForgotPassword />}
+                        />
+                        <Route
+                            path="/reset-password"
+                            element={<ResetPassword />}
+                        />
+                    </Route>
                 </Routes>
+                <CookieConsent />
             </BrowserRouter>
             <Toaster
                 position="bottom-right"
