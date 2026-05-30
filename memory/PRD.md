@@ -121,3 +121,13 @@ P2
 - New **`PickupTimeline`** component on `/dashboard/pickups/:id` (section 01 Tracking) renders steps Booking received → Booking confirmed → Driver assigned → Pickup in progress → Recycled, with done / current (pulsing terracotta) / upcoming dashed / cancelled states. Cancelled bookings collapse to a 2-step timeline. `getPickupTimeline()` lives in `lib/mockPickups.js` and derives timestamps from `createdAt` and `date`.
 - Section numbering on details page now: 01 Tracking, 02 Schedule, 03 Notes, 04 Pictures, 05 Impact.
 - Testing agent: **97.9% (46/47)** — one real bug found and fixed: completed pickups previously rendered the final Recycled step as 'current' (pulsing); `getPickupTimeline` now special-cases `completed` to mark all 5 steps `done`.
+
+## Implemented (2026-02-29 ++++) — Executive (partner) portal
+- New mobile-first **/executive** namespace, totally isolated from the customer dashboard. Auth-guarded by a localStorage key `bincycle:executive:auth`.
+- Routes: `/executive/login`, `/executive` (dashboard), `/executive/pickups` (filters: Assigned default, In progress, Completed), `/executive/pickups/:id` (call + directions + status timeline + status-aware primary action), `/executive/pickups/:id/complete` (5-step wizard), `/executive/me` (profile + stats + sign out).
+- **Mobile bottom nav** (Dashboard · Pickups · Complete · Profile) with a synthetic Complete tab that smart-routes to the most actionable pickup.
+- **Status flow** (7 states): assigned → accepted → on_the_way → arrived → collecting → payment_pending → completed. Persistent timeline drawn on the details page; reusable `ExecStatusBadge`.
+- **Complete workflow**: Items (category select with rate per kg + weight + qty + notes, multiple entries), Photos (multi-upload with previews + remove, dataURL stored), Pricing (per-row subtotal + total weight + total amount), Payment (UPI QR placeholder generated deterministically from booking id + amount, OR Cash with received-amount input + change calculation), Done (success card + on-screen receipt + 2 navigation buttons).
+- **Executive profile**: name, EXEC-0042, phone, zone (Bengaluru East), vehicle (EV-T-018), rating, today's performance grid (pickups · kg · earnings) and Sign out button.
+- **Cookie consent banner** now suppressed on /executive/* routes so it doesn't intercept clicks on the partner app.
+- Testing agent: **100% (frontend)** — no functional issues found. Minor noted: toast stack can overlap the fixed bottom nav momentarily on mobile (cosmetic).
