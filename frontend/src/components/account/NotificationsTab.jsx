@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
@@ -30,8 +30,13 @@ const ROWS = [
 export const NotificationsTab = () => {
     const [prefs, setPrefs] = useState(getNotifications);
     const [savedAt, setSavedAt] = useState(null);
+    const mounted = useRef(false);
 
     useEffect(() => {
+        if (!mounted.current) {
+            mounted.current = true;
+            return;
+        }
         saveNotifications(prefs);
         setSavedAt(new Date());
     }, [prefs]);

@@ -123,7 +123,7 @@ const Account = () => {
                                         role="tab"
                                         aria-selected={isActive}
                                         onClick={() => setActive(t.id)}
-                                        data-testid={`account-tab-${t.id}-btn`}
+                                        data-testid={`account-tab-${t.id}-btn-mobile`}
                                         className={`inline-flex shrink-0 items-center gap-2 rounded-sm border px-3 py-2.5 text-sm transition-colors ${
                                             isActive
                                                 ? "bg-[#171A15] text-[#F7F5F0] border-[#171A15]"

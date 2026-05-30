@@ -247,7 +247,9 @@ export const mockCouponHistory = [
     },
 ];
 
-// ----- Clear everything on logout -----
+// ----- Clear everything on logout / account-delete -----
+// NOTE: We intentionally do NOT clear `bincycle:cookie-consent` so a returning
+// visitor isn't prompted again after signing out.
 export const clearAllUserData = () => {
     [
         K.profile,

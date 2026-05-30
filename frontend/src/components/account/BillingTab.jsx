@@ -181,7 +181,7 @@ export const BillingTab = () => {
                             {mockInvoices.map((inv, i) => (
                                 <tr
                                     key={inv.id}
-                                    data-testid={`invoice-row-${inv.id}`}
+                                    data-testid={`billing-invoice-${inv.id}`}
                                     className={
                                         i % 2
                                             ? "bg-[#F7F5F0]/50"

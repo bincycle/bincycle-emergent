@@ -101,3 +101,15 @@ P2
   - On confirm, the booking is persisted to `bincycle:pickups` and appears at the top of the Upcoming list.
 - Sidebar "My Pickups" link now active and routes to the list.
 - Testing agent: **~96% (26/27)**; single mismatch was a 50%-off rounding choice — switched `computeDiscount` to `Math.floor` so 50% off ₹149 → ₹75 total. Also removed line-through from the cancelled-status chip per code review.
+
+## Implemented (2026-02-29 ++) — Account dashboard at /dashboard/me
+- New tabs-driven Account page with six sections, accessible via the new **Profile** sidebar link and the dashboard profile card. Tabs deep-link via `?tab=…` and swap with framer-motion fades.
+- **Profile**: avatar upload (base64), name/email/phone with edit-mode + validation + Save/Cancel; persists to `bincycle:profile` and feeds back into the sidebar profile card.
+- **Addresses**: full CRUD with inline form (label/line1/city/6-digit pincode), set-default, dedicated delete confirmation dialog. Seeds from existing mock once, then `bincycle:addresses` is source of truth.
+- **Notifications**: 4 toggles (email/SMS/reminders/marketing), auto-save with "Saved" chip (now skips the first-mount flash).
+- **Security**: change-password (current/new/confirm + strength meter + requirements list + show/hide + loading), Active Sessions (4 mock devices, per-row sign-out, sign-out-of-all-others), Login History (5 mock rows with status badge), 2FA placeholder toggle, **Danger Zone** with delete-account dialog that requires typing `DELETE` before the destructive button enables — on confirm, all `bincycle:*` keys (except cookie consent) are cleared and the user is sent to `/login`.
+- **Billing**: dark plan card (Weekly · ₹499 · renewal date · bags remaining), payment-methods list (Visa + UPI), invoices table with per-row testid `billing-invoice-{id}`, coupon savings list.
+- **Activity**: stat grid (total/completed/kg/savings) + Upcoming + Recently completed + recently used promo codes; reuses `loadAllPickups()` and `mockCouponHistory`.
+- **LogoutDialog** wired to sidebar + mobile topbar signout buttons — confirm clears local data and routes to `/login`.
+- Responsive: desktop uses a vertical settings sidebar; tablet/mobile uses a horizontal scrollable pill bar (duplicated testids now suffixed `-mobile`).
+- Testing agent: **100% (17/17)**. Two cosmetic fixes applied (invoice-row testid renamed to spec, notifications save flash fixed); 2FA persistence and SecurityTab file split kept as backlog.
