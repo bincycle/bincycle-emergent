@@ -20,7 +20,13 @@ const navItems = [
         end: true,
         disabled: false,
     },
-    { to: "#", label: "My Pickups", icon: Package, disabled: true },
+    {
+        to: "/dashboard/pickups",
+        label: "My Pickups",
+        icon: Package,
+        end: false,
+        disabled: false,
+    },
     { to: "#", label: "Invoices", icon: Receipt, disabled: true },
     { to: "#", label: "Settings", icon: Settings, disabled: true },
 ];

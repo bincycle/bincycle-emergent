@@ -15,6 +15,8 @@ import Contact from "@/pages/Contact";
 import PrivacyPolicy from "@/pages/PrivacyPolicy";
 import TermsOfService from "@/pages/TermsOfService";
 import BookPickup from "@/pages/BookPickup";
+import Pickups from "@/pages/Pickups";
+import PickupDetails from "@/pages/PickupDetails";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
@@ -44,6 +46,14 @@ function App() {
                         <Route
                             path="/dashboard/book-pickup"
                             element={<BookPickup />}
+                        />
+                        <Route
+                            path="/dashboard/pickups"
+                            element={<Pickups />}
+                        />
+                        <Route
+                            path="/dashboard/pickups/:id"
+                            element={<PickupDetails />}
                         />
                     </Route>
                     <Route element={<AuthLayout />}>

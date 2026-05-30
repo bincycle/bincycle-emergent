@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { format, parseISO, isValid } from "date-fns";
 import {
     Calendar as CalendarIcon,
@@ -12,6 +13,9 @@ import {
     StickyNote,
     Sparkles,
     RotateCcw,
+    BadgePercent,
+    Loader2,
+    CheckCircle,
 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -28,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import {
     Dialog,
     DialogContent,
@@ -44,6 +49,15 @@ import {
     clearDraft,
     fileToDataUrl,
 } from "@/lib/bookingPersistence";
+import {
+    findCoupon,
+    computeDiscount,
+    saveUserPickup,
+} from "@/lib/mockPickups";
+
+const BASE_FEE = 149;
+const MAX_IMAGES = 4;
+const MAX_IMAGE_MB = 5;
 
 const today = () => {
     const d = new Date();
@@ -52,26 +66,134 @@ const today = () => {
 };
 const maxDate = () => {
     const d = today();
-    d.setDate(d.getDate() + 6); // 7-day window inclusive of today
+    d.setDate(d.getDate() + 6);
     return d;
 };
 
+// ----- Shared summary list used by review + success states -----
+const BookingSummaryList = ({
+    date,
+    selectedSlot,
+    selectedAddress,
+    notes,
+    images,
+    couponCode,
+    discount,
+}) => (
+    <dl className="space-y-3 text-sm">
+        <div className="flex justify-between">
+            <dt className="text-[#596155]">Date</dt>
+            <dd className="text-[#121710]">
+                {date ? format(date, "EEEE, d MMM") : "—"}
+            </dd>
+        </div>
+        <div className="flex justify-between">
+            <dt className="text-[#596155]">Slot</dt>
+            <dd className="text-[#121710]">{selectedSlot?.range || "—"}</dd>
+        </div>
+        <div className="flex justify-between gap-4">
+            <dt className="text-[#596155]">Address</dt>
+            <dd className="text-right text-[#121710] max-w-[60%]">
+                {selectedAddress
+                    ? `${selectedAddress.label} · ${selectedAddress.line1}`
+                    : "—"}
+            </dd>
+        </div>
+        {notes && (
+            <div className="flex justify-between gap-4">
+                <dt className="text-[#596155]">Notes</dt>
+                <dd className="text-right text-[#121710] max-w-[60%] truncate">
+                    {notes}
+                </dd>
+            </div>
+        )}
+        {images && images.length > 0 && (
+            <div className="flex justify-between">
+                <dt className="text-[#596155]">Pictures</dt>
+                <dd className="text-[#121710]">
+                    {images.length} attached
+                </dd>
+            </div>
+        )}
+        {couponCode && discount > 0 && (
+            <div className="flex justify-between">
+                <dt className="text-[#596155]">
+                    Discount{" "}
+                    <span className="font-mono-label text-[10px] text-[#C45B38]">
+                        {couponCode}
+                    </span>
+                </dt>
+                <dd className="text-[#C45B38]">− ₹{discount}</dd>
+            </div>
+        )}
+    </dl>
+);
+
+// ----- Autosave indicator -----
+const SaveIndicator = ({ status, lastSavedAt }) => {
+    if (status === "idle") return null;
+    if (status === "saving") {
+        return (
+            <span
+                data-testid="autosave-indicator"
+                data-status="saving"
+                className="inline-flex items-center gap-2 rounded-sm border border-[#D1CDBC] bg-white px-2.5 py-1.5 font-mono-label text-[10px] text-[#596155]"
+            >
+                <Loader2 size={12} className="animate-spin" />
+                Saving...
+            </span>
+        );
+    }
+    return (
+        <span
+            data-testid="autosave-indicator"
+            data-status="saved"
+            className="inline-flex items-center gap-2 rounded-sm border border-[#D1CDBC] bg-white px-2.5 py-1.5 font-mono-label text-[10px] text-[#596155]"
+        >
+            <CheckCircle size={12} className="text-[#284226]" />
+            Saved locally
+            {lastSavedAt && (
+                <span className="text-[#596155]/70">
+                    · {format(lastSavedAt, "HH:mm")}
+                </span>
+            )}
+        </span>
+    );
+};
+
 const BookPickup = () => {
+    const navigate = useNavigate();
+
     const [date, setDate] = useState(undefined);
     const [slotId, setSlotId] = useState(null);
     const [addressId, setAddressId] = useState("");
     const [notes, setNotes] = useState("");
-    const [image, setImage] = useState(null); // { name, type, size, url(dataURL) }
+    const [images, setImages] = useState([]); // array of { name, type, size, url }
+    const [couponInput, setCouponInput] = useState("");
+    const [appliedCoupon, setAppliedCoupon] = useState(null); // { code, type, value, description }
+    const [couponError, setCouponError] = useState("");
+
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [dialogStep, setDialogStep] = useState("review"); // 'review' | 'success'
     const [bookingId, setBookingId] = useState(null);
+
     const [hydrated, setHydrated] = useState(false);
+    const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | saved
+    const [lastSavedAt, setLastSavedAt] = useState(null);
 
     const min = useMemo(() => today(), []);
     const max = useMemo(() => maxDate(), []);
 
     const selectedAddress = savedAddresses.find((a) => a.id === addressId);
     const selectedSlot = timeSlots.find((s) => s.id === slotId);
+
+    const discount = useMemo(
+        () => computeDiscount(appliedCoupon, BASE_FEE),
+        [appliedCoupon]
+    );
+    const total = Math.max(0, BASE_FEE - discount);
+
+    const fileInputRef = useRef(null);
 
     // --- Hydrate from localStorage on first mount ---
     useEffect(() => {
@@ -85,55 +207,127 @@ const BookPickup = () => {
             if (draft.slotId) setSlotId(draft.slotId);
             if (draft.addressId) setAddressId(draft.addressId);
             if (typeof draft.notes === "string") setNotes(draft.notes);
-            if (draft.image && draft.image.url) setImage(draft.image);
+            if (Array.isArray(draft.images)) setImages(draft.images);
+            // Backwards-compat with previous single-image schema
+            else if (draft.image && draft.image.url) setImages([draft.image]);
+            if (draft.couponCode) {
+                const c = findCoupon(draft.couponCode);
+                if (c) {
+                    setAppliedCoupon(c);
+                    setCouponInput(c.code);
+                }
+            }
         }
         setHydrated(true);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // --- Persist on every change (after hydration) ---
+    // --- Persist (debounced indicator) on every change after hydration ---
     useEffect(() => {
         if (!hydrated) return;
         const empty =
-            !date && !slotId && !addressId && !notes && !image;
+            !date &&
+            !slotId &&
+            !addressId &&
+            !notes &&
+            images.length === 0 &&
+            !appliedCoupon;
         if (empty) {
             clearDraft();
+            setSaveStatus("idle");
+            setLastSavedAt(null);
             return;
         }
-        saveDraft({
-            date: date ? date.toISOString() : null,
-            slotId,
-            addressId,
-            notes,
-            image,
-        });
-    }, [date, slotId, addressId, notes, image, hydrated]);
-
-    const fileInputRef = useRef(null);
-
-    const onImage = async (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        if (file.size > 5 * 1024 * 1024) {
-            toast.error("Image too large — please keep it under 5 MB.");
-            return;
-        }
-        try {
-            const url = await fileToDataUrl(file);
-            setImage({
-                name: file.name,
-                type: file.type,
-                size: file.size,
-                url,
+        setSaveStatus("saving");
+        const tSave = setTimeout(() => {
+            saveDraft({
+                date: date ? date.toISOString() : null,
+                slotId,
+                addressId,
+                notes,
+                images,
+                couponCode: appliedCoupon?.code || null,
             });
-        } catch {
-            toast.error("Could not read that image. Please try another.");
+            setLastSavedAt(new Date());
+            setSaveStatus("saved");
+        }, 350);
+        return () => clearTimeout(tSave);
+    }, [
+        date,
+        slotId,
+        addressId,
+        notes,
+        images,
+        appliedCoupon,
+        hydrated,
+    ]);
+
+    const onPickImages = async (e) => {
+        const files = Array.from(e.target.files || []);
+        if (!files.length) return;
+        const room = MAX_IMAGES - images.length;
+        if (room <= 0) {
+            toast.error(`You can attach up to ${MAX_IMAGES} pictures.`);
+            return;
         }
+        const accepted = files.slice(0, room);
+        const next = [];
+        for (const file of accepted) {
+            if (file.size > MAX_IMAGE_MB * 1024 * 1024) {
+                toast.error(
+                    `${file.name} is over ${MAX_IMAGE_MB} MB and was skipped.`
+                );
+                continue;
+            }
+            try {
+                const url = await fileToDataUrl(file);
+                next.push({
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    url,
+                });
+            } catch {
+                toast.error(`Couldn't read ${file.name}.`);
+            }
+        }
+        if (next.length) setImages((prev) => [...prev, ...next]);
+        if (files.length > room)
+            toast(`Only added ${room} — limit is ${MAX_IMAGES}.`);
+        if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
-    const clearImage = () => {
-        setImage(null);
+    const removeImage = (idx) => {
+        setImages((prev) => prev.filter((_, i) => i !== idx));
+    };
+
+    const clearAllImages = () => {
+        setImages([]);
         if (fileInputRef.current) fileInputRef.current.value = "";
+    };
+
+    const applyCoupon = () => {
+        const code = couponInput.trim();
+        if (!code) {
+            setCouponError("Enter a promo code.");
+            return;
+        }
+        const c = findCoupon(code);
+        if (!c) {
+            setCouponError("That code isn't valid.");
+            setAppliedCoupon(null);
+            return;
+        }
+        setAppliedCoupon(c);
+        setCouponInput(c.code);
+        setCouponError("");
+        toast.success(`${c.code} applied · ${c.description}.`);
+    };
+
+    const removeCoupon = () => {
+        setAppliedCoupon(null);
+        setCouponInput("");
+        setCouponError("");
     };
 
     const canSubmit = date && slotId && addressId;
@@ -153,22 +347,37 @@ const BookPickup = () => {
     const confirmBooking = () => {
         const id = `BC-${Math.floor(Math.random() * 9000) + 1000}`;
         setBookingId(id);
-        setDialogStep("success");
-        toast.success(
-            `Pickup confirmed for ${format(date, "EEE, d MMM")} · ${selectedSlot.range}`
-        );
+        saveUserPickup({
+            id,
+            date: date.toISOString(),
+            slotId,
+            addressId,
+            notes,
+            images,
+            status: "scheduled",
+            createdAt: new Date().toISOString(),
+            fee: BASE_FEE,
+            discount,
+            couponCode: appliedCoupon?.code || null,
+        });
         clearDraft();
+        setSaveStatus("idle");
+        setLastSavedAt(null);
+        setDialogStep("success");
+        // Intentionally no toast — success modal communicates the same.
     };
 
     const closeAndReset = () => {
         setConfirmOpen(false);
-        // small delay so dialog can animate out before form resets visually
         setTimeout(() => {
             setDate(undefined);
             setSlotId(null);
             setAddressId("");
             setNotes("");
-            clearImage();
+            clearAllImages();
+            setCouponInput("");
+            setAppliedCoupon(null);
+            setCouponError("");
             setBookingId(null);
             setDialogStep("review");
             clearDraft();
@@ -176,7 +385,6 @@ const BookPickup = () => {
     };
 
     const handleDialogChange = (open) => {
-        // After successful booking, closing the dialog should also reset.
         if (!open && dialogStep === "success") {
             closeAndReset();
             return;
@@ -189,10 +397,23 @@ const BookPickup = () => {
         setSlotId(null);
         setAddressId("");
         setNotes("");
-        clearImage();
+        clearAllImages();
+        setCouponInput("");
+        setAppliedCoupon(null);
+        setCouponError("");
         clearDraft();
+        setSaveStatus("idle");
+        setLastSavedAt(null);
         toast("Draft cleared.");
     };
+
+    const hasAnyValue =
+        date ||
+        slotId ||
+        addressId ||
+        notes ||
+        images.length > 0 ||
+        appliedCoupon;
 
     return (
         <div
@@ -214,16 +435,22 @@ const BookPickup = () => {
                         rest. Your progress is saved automatically.
                     </p>
                 </div>
-                {(date || slotId || addressId || notes || image) && (
-                    <button
-                        type="button"
-                        onClick={resetDraft}
-                        data-testid="book-clear-draft-btn"
-                        className="self-start inline-flex items-center gap-2 rounded-sm border border-[#D1CDBC] px-3 py-2 text-xs font-medium text-[#596155] hover:border-[#121710] hover:text-[#121710] transition-colors"
-                    >
-                        <RotateCcw size={14} /> Clear draft
-                    </button>
-                )}
+                <div className="flex flex-wrap items-center gap-2 self-start">
+                    <SaveIndicator
+                        status={saveStatus}
+                        lastSavedAt={lastSavedAt}
+                    />
+                    {hasAnyValue && (
+                        <button
+                            type="button"
+                            onClick={resetDraft}
+                            data-testid="book-clear-draft-btn"
+                            className="inline-flex items-center gap-2 rounded-sm border border-[#D1CDBC] px-3 py-2 text-xs font-medium text-[#596155] hover:border-[#121710] hover:text-[#121710] transition-colors"
+                        >
+                            <RotateCcw size={14} /> Clear draft
+                        </button>
+                    )}
+                </div>
             </header>
 
             <form
@@ -397,7 +624,7 @@ const BookPickup = () => {
                         )}
                     </section>
 
-                    {/* 04 · Notes (separated from pictures) */}
+                    {/* 04 · Notes */}
                     <section
                         data-testid="section-notes"
                         className="rounded-sm border border-[#D1CDBC] bg-white p-6 sm:p-8"
@@ -433,7 +660,7 @@ const BookPickup = () => {
                         </p>
                     </section>
 
-                    {/* 05 · Pictures (separated from notes) */}
+                    {/* 05 · Pictures (multiple) */}
                     <section
                         data-testid="section-pictures"
                         className="rounded-sm border border-[#D1CDBC] bg-white p-6 sm:p-8"
@@ -448,59 +675,69 @@ const BookPickup = () => {
                                 </p>
                             </div>
                             <p className="font-mono-label text-[10px] text-[#596155]">
-                                Optional · helps our partner spot the load
+                                {images.length}/{MAX_IMAGES} · up to{" "}
+                                {MAX_IMAGE_MB} MB each
                             </p>
                         </div>
 
-                        {image ? (
+                        {images.length > 0 && (
                             <div
-                                className="relative rounded-sm border border-[#D1CDBC] overflow-hidden"
-                                data-testid="image-preview"
+                                data-testid="image-previews-grid"
+                                className="mb-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"
                             >
-                                <img
-                                    src={image.url}
-                                    alt={image.name || "Upload preview"}
-                                    className="h-56 w-full object-cover"
-                                />
-                                <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-3 bg-[#171A15]/85 backdrop-blur-md px-4 py-3 text-[#F7F5F0]">
-                                    <p
-                                        className="text-xs truncate"
-                                        data-testid="image-name"
+                                {images.map((img, idx) => (
+                                    <div
+                                        key={`${img.name}-${idx}`}
+                                        data-testid={`image-preview-${idx}`}
+                                        className="group relative overflow-hidden rounded-sm border border-[#D1CDBC]"
                                     >
-                                        {image.name || "Attached image"}
-                                    </p>
-                                    <button
-                                        type="button"
-                                        data-testid="image-clear-btn"
-                                        onClick={clearImage}
-                                        className="inline-flex items-center gap-1.5 rounded-sm bg-[#C45B38] px-2.5 py-1.5 text-[11px] font-medium hover:bg-[#A64A2B]"
-                                    >
-                                        <X size={12} /> Remove
-                                    </button>
-                                </div>
+                                        <img
+                                            src={img.url}
+                                            alt={img.name || `pic-${idx}`}
+                                            className="h-28 w-full object-cover"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => removeImage(idx)}
+                                            data-testid={`image-remove-${idx}`}
+                                            aria-label={`Remove ${img.name}`}
+                                            className="absolute top-1.5 right-1.5 inline-flex h-7 w-7 items-center justify-center rounded-sm bg-[#171A15]/85 text-[#F7F5F0] opacity-0 transition-opacity group-hover:opacity-100 hover:bg-[#C45B38]"
+                                        >
+                                            <X size={12} />
+                                        </button>
+                                        <p className="absolute inset-x-0 bottom-0 truncate bg-[#171A15]/85 px-2 py-1 text-[10px] text-[#F7F5F0]">
+                                            {img.name}
+                                        </p>
+                                    </div>
+                                ))}
                             </div>
-                        ) : (
+                        )}
+
+                        {images.length < MAX_IMAGES && (
                             <label
-                                htmlFor="image"
+                                htmlFor="images"
                                 data-testid="image-upload-label"
-                                className="flex h-44 w-full cursor-pointer flex-col items-center justify-center rounded-sm border-2 border-dashed border-[#D1CDBC] bg-[#F7F5F0] text-center transition-colors hover:border-[#284226] hover:bg-[#EDE9DC]"
+                                className="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-sm border-2 border-dashed border-[#D1CDBC] bg-[#F7F5F0] text-center transition-colors hover:border-[#284226] hover:bg-[#EDE9DC]"
                             >
                                 <UploadCloud
-                                    size={26}
+                                    size={22}
                                     className="text-[#596155]"
                                 />
                                 <p className="mt-2 text-sm text-[#121710] font-medium">
-                                    Drop image or click to browse
+                                    {images.length === 0
+                                        ? "Drop images or click to browse"
+                                        : "Add more pictures"}
                                 </p>
                                 <p className="text-xs text-[#596155]">
-                                    PNG / JPG, up to 5 MB
+                                    PNG / JPG · up to {MAX_IMAGE_MB} MB each
                                 </p>
                                 <input
-                                    id="image"
+                                    id="images"
                                     ref={fileInputRef}
                                     type="file"
                                     accept="image/*"
-                                    onChange={onImage}
+                                    multiple
+                                    onChange={onPickImages}
                                     data-testid="image-input"
                                     className="sr-only"
                                 />
@@ -519,35 +756,23 @@ const BookPickup = () => {
                             On-demand pickup
                         </h3>
 
-                        <dl className="mt-7 space-y-5">
-                            <div className="flex items-start justify-between gap-4">
-                                <dt className="text-sm text-[#F7F5F0]/60">
-                                    Date
-                                </dt>
-                                <dd
-                                    className="text-sm text-right"
-                                    data-testid="summary-date"
-                                >
+                        <dl className="mt-7 space-y-5 text-sm">
+                            <div className="flex justify-between gap-4">
+                                <dt className="text-[#F7F5F0]/60">Date</dt>
+                                <dd data-testid="summary-date">
                                     {date ? format(date, "EEE, d MMM") : "—"}
                                 </dd>
                             </div>
-                            <div className="flex items-start justify-between gap-4">
-                                <dt className="text-sm text-[#F7F5F0]/60">
-                                    Slot
-                                </dt>
-                                <dd
-                                    className="text-sm text-right"
-                                    data-testid="summary-slot"
-                                >
+                            <div className="flex justify-between gap-4">
+                                <dt className="text-[#F7F5F0]/60">Slot</dt>
+                                <dd data-testid="summary-slot">
                                     {selectedSlot ? selectedSlot.range : "—"}
                                 </dd>
                             </div>
-                            <div className="flex items-start justify-between gap-4">
-                                <dt className="text-sm text-[#F7F5F0]/60">
-                                    Address
-                                </dt>
+                            <div className="flex justify-between gap-4">
+                                <dt className="text-[#F7F5F0]/60">Address</dt>
                                 <dd
-                                    className="text-sm text-right max-w-[60%]"
+                                    className="text-right max-w-[60%]"
                                     data-testid="summary-address"
                                 >
                                     {selectedAddress
@@ -555,27 +780,128 @@ const BookPickup = () => {
                                         : "—"}
                                 </dd>
                             </div>
-                            <div className="flex items-start justify-between gap-4">
-                                <dt className="text-sm text-[#F7F5F0]/60">
-                                    Photo
-                                </dt>
-                                <dd
-                                    className="text-sm text-right"
-                                    data-testid="summary-photo"
-                                >
-                                    {image ? "Attached" : "—"}
+                            <div className="flex justify-between gap-4">
+                                <dt className="text-[#F7F5F0]/60">Pictures</dt>
+                                <dd data-testid="summary-photo">
+                                    {images.length > 0
+                                        ? `${images.length} attached`
+                                        : "—"}
                                 </dd>
                             </div>
                         </dl>
 
-                        <div className="mt-8 border-t border-[#F7F5F0]/15 pt-6">
-                            <div className="flex items-end justify-between">
+                        {/* Promo code */}
+                        <div className="mt-8 pt-6 border-t border-[#F7F5F0]/15">
+                            <div className="flex items-center gap-2">
+                                <BadgePercent
+                                    size={14}
+                                    className="text-[#C45B38]"
+                                />
+                                <p className="font-mono-label text-[10px] text-[#F7F5F0]/60">
+                                    Promo code
+                                </p>
+                            </div>
+                            {appliedCoupon ? (
+                                <div
+                                    data-testid="coupon-applied"
+                                    className="mt-3 flex items-center justify-between gap-2 rounded-sm border border-[#284226] bg-[#284226]/40 px-3 py-2.5"
+                                >
+                                    <div className="min-w-0">
+                                        <p
+                                            className="font-display text-sm font-bold tracking-tight text-[#F7F5F0]"
+                                            data-testid="coupon-applied-code"
+                                        >
+                                            {appliedCoupon.code}
+                                        </p>
+                                        <p className="text-[11px] text-[#F7F5F0]/70 truncate">
+                                            {appliedCoupon.description}
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={removeCoupon}
+                                        data-testid="coupon-remove-btn"
+                                        aria-label="Remove promo code"
+                                        className="rounded-sm p-1.5 text-[#F7F5F0]/70 hover:bg-[#F7F5F0]/10 hover:text-[#F7F5F0]"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="mt-3 flex gap-2">
+                                    <Input
+                                        value={couponInput}
+                                        onChange={(e) => {
+                                            setCouponInput(
+                                                e.target.value.toUpperCase()
+                                            );
+                                            if (couponError)
+                                                setCouponError("");
+                                        }}
+                                        placeholder="ENTER CODE"
+                                        data-testid="coupon-input"
+                                        className="h-10 rounded-sm bg-[#F7F5F0]/5 border-[#F7F5F0]/20 text-[#F7F5F0] placeholder:text-[#F7F5F0]/40 focus-visible:ring-[#C45B38] uppercase tracking-wider"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={applyCoupon}
+                                        data-testid="coupon-apply-btn"
+                                        className="rounded-sm bg-[#C45B38] px-3 text-xs font-medium text-[#F7F5F0] hover:bg-[#A64A2B] transition-colors"
+                                    >
+                                        Apply
+                                    </button>
+                                </div>
+                            )}
+                            {couponError && (
+                                <p
+                                    data-testid="coupon-error"
+                                    className="mt-2 text-xs text-[#C45B38]"
+                                >
+                                    {couponError}
+                                </p>
+                            )}
+                        </div>
+
+                        {/* Fee block */}
+                        <div className="mt-8 border-t border-[#F7F5F0]/15 pt-6 space-y-2">
+                            <div className="flex justify-between text-sm">
+                                <span className="text-[#F7F5F0]/60">
+                                    Pickup fee
+                                </span>
+                                <span
+                                    data-testid="summary-fee"
+                                    className={
+                                        discount > 0
+                                            ? "text-[#F7F5F0]/60 line-through"
+                                            : "text-[#F7F5F0]"
+                                    }
+                                >
+                                    ₹{BASE_FEE}
+                                </span>
+                            </div>
+                            {discount > 0 && (
+                                <div
+                                    className="flex justify-between text-sm"
+                                    data-testid="summary-discount-row"
+                                >
+                                    <span className="text-[#F7F5F0]/60">
+                                        Discount
+                                    </span>
+                                    <span className="text-[#C45B38]">
+                                        − ₹{discount}
+                                    </span>
+                                </div>
+                            )}
+                            <div className="flex items-end justify-between pt-2">
                                 <div>
                                     <p className="font-mono-label text-[10px] text-[#F7F5F0]/60">
-                                        Pickup fee
+                                        Total
                                     </p>
-                                    <p className="font-display text-3xl font-black tracking-tight">
-                                        ₹149
+                                    <p
+                                        className="font-display text-3xl font-black tracking-tight"
+                                        data-testid="summary-total"
+                                    >
+                                        ₹{total}
                                     </p>
                                 </div>
                                 <p className="text-xs text-[#F7F5F0]/60">
@@ -605,7 +931,7 @@ const BookPickup = () => {
                 </aside>
             </form>
 
-            {/* Confirmation / Success dialog */}
+            {/* Confirmation / Success dialog — same shell, two steps */}
             <Dialog open={confirmOpen} onOpenChange={handleDialogChange}>
                 <DialogContent
                     data-testid={
@@ -613,11 +939,11 @@ const BookPickup = () => {
                             ? "booking-success-dialog"
                             : "booking-confirm-dialog"
                     }
-                    className="rounded-sm border-[#D1CDBC] bg-[#F7F5F0] max-w-md p-0 overflow-hidden"
+                    className="rounded-sm border-[#D1CDBC] bg-[#F7F5F0] max-w-md p-6"
                 >
                     {dialogStep === "review" ? (
-                        <div className="p-6">
-                            <DialogHeader>
+                        <>
+                            <DialogHeader className="text-left space-y-1.5">
                                 <p className="font-mono-label text-xs text-[#596155]">
                                     Confirm booking
                                 </p>
@@ -630,47 +956,28 @@ const BookPickup = () => {
                                 </DialogDescription>
                             </DialogHeader>
 
-                            <dl className="mt-5 space-y-3 text-sm border-y border-[#D1CDBC] py-4">
-                                <div className="flex justify-between">
-                                    <dt className="text-[#596155]">Date</dt>
-                                    <dd className="text-[#121710]">
-                                        {date && format(date, "EEEE, d MMM")}
-                                    </dd>
+                            <div className="mt-5 border-y border-[#D1CDBC] py-4">
+                                <BookingSummaryList
+                                    date={date}
+                                    selectedSlot={selectedSlot}
+                                    selectedAddress={selectedAddress}
+                                    notes={notes}
+                                    images={images}
+                                    couponCode={appliedCoupon?.code}
+                                    discount={discount}
+                                />
+                                <div className="mt-4 flex items-center justify-between">
+                                    <p className="font-mono-label text-[10px] text-[#596155]">
+                                        Total
+                                    </p>
+                                    <p
+                                        className="font-display text-2xl font-black tracking-tight text-[#121710]"
+                                        data-testid="confirm-modal-total"
+                                    >
+                                        ₹{total}
+                                    </p>
                                 </div>
-                                <div className="flex justify-between">
-                                    <dt className="text-[#596155]">Slot</dt>
-                                    <dd className="text-[#121710]">
-                                        {selectedSlot?.range}
-                                    </dd>
-                                </div>
-                                <div className="flex justify-between gap-4">
-                                    <dt className="text-[#596155]">Address</dt>
-                                    <dd className="text-right text-[#121710] max-w-[60%]">
-                                        {selectedAddress?.label} ·{" "}
-                                        {selectedAddress?.line1}
-                                    </dd>
-                                </div>
-                                {notes && (
-                                    <div className="flex justify-between gap-4">
-                                        <dt className="text-[#596155]">
-                                            Notes
-                                        </dt>
-                                        <dd className="text-right text-[#121710] max-w-[60%] truncate">
-                                            {notes}
-                                        </dd>
-                                    </div>
-                                )}
-                                {image && (
-                                    <div className="flex justify-between gap-4">
-                                        <dt className="text-[#596155]">
-                                            Photo
-                                        </dt>
-                                        <dd className="text-right text-[#121710] max-w-[60%] truncate">
-                                            {image.name || "Attached"}
-                                        </dd>
-                                    </div>
-                                )}
-                            </dl>
+                            </div>
 
                             <DialogFooter className="flex-row gap-2 mt-5">
                                 <button
@@ -690,57 +997,69 @@ const BookPickup = () => {
                                     Confirm pickup
                                 </button>
                             </DialogFooter>
-                        </div>
+                        </>
                     ) : (
-                        // SUCCESS STATE — in same modal
-                        <div
-                            data-testid="booking-success"
-                            className="bg-[#284226] text-[#F7F5F0] p-6 sm:p-8"
-                        >
-                            <DialogHeader>
-                                <DialogDescription className="sr-only">
-                                    Your pickup booking has been confirmed.
+                        // SUCCESS state — same shell, same spacing/typography
+                        <div data-testid="booking-success">
+                            <DialogHeader className="text-left space-y-1.5">
+                                <p
+                                    className="font-mono-label text-xs text-[#284226] flex items-center gap-2"
+                                    data-testid="booking-success-id"
+                                >
+                                    <Check size={12} />
+                                    Pickup confirmed · {bookingId}
+                                </p>
+                                <DialogTitle className="font-display text-2xl font-black tracking-tight text-[#121710]">
+                                    You're all set.
+                                </DialogTitle>
+                                <DialogDescription className="text-[#596155]">
+                                    Our partner will arrive on{" "}
+                                    <span className="text-[#121710] font-medium">
+                                        {date && format(date, "EEEE, d MMM")}
+                                    </span>{" "}
+                                    between{" "}
+                                    <span className="text-[#121710] font-medium">
+                                        {selectedSlot?.range}
+                                    </span>
+                                    .
                                 </DialogDescription>
                             </DialogHeader>
-                            <div className="inline-flex items-center justify-center h-14 w-14 rounded-full bg-[#C45B38]">
-                                <Check size={26} />
-                            </div>
-                            <p
-                                className="mt-6 font-mono-label text-xs text-[#F7F5F0]/70"
-                                data-testid="booking-success-id"
-                            >
-                                Booking #{bookingId}
-                            </p>
-                            <DialogTitle className="mt-3 font-display font-black tracking-tighter text-3xl sm:text-4xl text-[#F7F5F0]">
-                                Pickup confirmed.
-                            </DialogTitle>
-                            <p className="mt-4 text-[#F7F5F0]/80 leading-relaxed">
-                                Our partner will arrive on{" "}
-                                <span className="text-[#F7F5F0] font-medium">
-                                    {date && format(date, "EEEE, d MMMM")}
-                                </span>{" "}
-                                between{" "}
-                                <span className="text-[#F7F5F0] font-medium">
-                                    {selectedSlot?.range}
-                                </span>{" "}
-                                at{" "}
-                                <span className="text-[#F7F5F0] font-medium">
-                                    {selectedAddress?.label}
-                                </span>
-                                .
-                            </p>
 
-                            <div className="mt-6 rounded-sm bg-[#171A15]/50 border border-[#F7F5F0]/10 p-4">
-                                <p className="font-mono-label text-[10px] text-[#F7F5F0]/60">
+                            <div className="mt-5 border-y border-[#D1CDBC] py-4">
+                                <BookingSummaryList
+                                    date={date}
+                                    selectedSlot={selectedSlot}
+                                    selectedAddress={selectedAddress}
+                                    notes={notes}
+                                    images={images}
+                                    couponCode={appliedCoupon?.code}
+                                    discount={discount}
+                                />
+                                <div className="mt-4 flex items-center justify-between">
+                                    <p className="font-mono-label text-[10px] text-[#596155]">
+                                        Charged
+                                    </p>
+                                    <p
+                                        className="font-display text-2xl font-black tracking-tight text-[#121710]"
+                                        data-testid="success-modal-total"
+                                    >
+                                        ₹{total}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="mt-5">
+                                <p className="font-mono-label text-[10px] text-[#596155]">
                                     What happens next
                                 </p>
-                                <ol className="mt-3 space-y-2 text-sm text-[#F7F5F0]/80">
+                                <ol className="mt-3 space-y-2 text-sm text-[#121710]">
                                     <li className="flex gap-2">
                                         <Sparkles
                                             size={14}
                                             className="text-[#C45B38] mt-0.5 shrink-0"
                                         />
-                                        SMS confirmation sent to your phone now.
+                                        SMS confirmation sent to your phone
+                                        now.
                                     </li>
                                     <li className="flex gap-2">
                                         <Sparkles
@@ -761,15 +1080,28 @@ const BookPickup = () => {
                                 </ol>
                             </div>
 
-                            <button
-                                type="button"
-                                onClick={closeAndReset}
-                                data-testid="booking-success-done-btn"
-                                className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-sm bg-[#C45B38] px-5 py-3.5 text-sm font-medium text-[#F7F5F0] hover:bg-[#A64A2B] transition-colors"
-                            >
-                                Done · book another later
-                                <ArrowRight size={16} />
-                            </button>
+                            <DialogFooter className="flex-row gap-2 mt-6">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const id = bookingId;
+                                        closeAndReset();
+                                        navigate(`/dashboard/pickups/${id}`);
+                                    }}
+                                    data-testid="booking-success-view-btn"
+                                    className="flex-1 rounded-sm border border-[#121710] px-4 py-3 text-sm font-medium text-[#121710] hover:bg-[#121710] hover:text-[#F7F5F0] transition-colors"
+                                >
+                                    View pickup
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={closeAndReset}
+                                    data-testid="booking-success-done-btn"
+                                    className="flex-1 rounded-sm bg-[#284226] px-4 py-3 text-sm font-medium text-[#F7F5F0] hover:bg-[#1C2E1A] transition-colors"
+                                >
+                                    Done
+                                </button>
+                            </DialogFooter>
                         </div>
                     )}
                 </DialogContent>

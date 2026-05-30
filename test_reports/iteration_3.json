@@ -1,0 +1,35 @@
+{
+  "summary": "Frontend-only UI testing for Bincycle dashboard/pickups (list + details), BookPickup (multi-image, coupons, autosave, persistence, refactored success modal, toast dedup). ~26/27 verified items passed end-to-end via Playwright + code review. Pickup list/details, sidebar, 375px responsive, status badges, tabs, unknown-id, autosave indicator states, multi-image with 4-cap, coupon valid/invalid, strikethrough fee, persistence-after-reload (images + coupon + notes + date + slot + address) all working. Confirm/Success modal share identical DialogContent shell ('rounded-sm border-[#D1CDBC] bg-[#F7F5F0] max-w-md p-6'), share BookingSummaryList component, and the previous toast.success('Pickup confirmed ...') is removed (confirmed in code at line 367: '// Intentionally no toast — success modal communicates the same.').",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/dashboard/book-pickup summary (WELCOME50)", "issues": ["Spec said 'summary-total reflects 50% off (₹75)'. Actual math: Math.round(149 * 0.50) = 75 discount, total = 149 − 75 = ₹74 (NOT ₹75). The implementation is internally consistent (computeDiscount rounds to 75, fee 149, total 74), but the spec's expected total of ₹75 is arithmetically off by 1. Suggest either (a) update spec wording or (b) change computeDiscount to use Math.floor for percent so 149*0.5→74 discount→75 total, matching the brief. Current behavior is acceptable but worth a one-line decision."]},
+      {"screen": "/dashboard/pickups upcoming tab", "issues": ["Status badge color for 'In progress' uses #C45B38 (orange) inside a very light tinted bg (#C45B38/10). Contrast at small caps 10px font is borderline (~3.5:1). Acceptable for tag-style chips, but reviewers should be aware."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "(Minor) Reconcile coupon math vs spec text. WELCOME50 currently gives ₹75 discount → ₹74 total. Spec mentioned ₹75 total. Either change Math.round → Math.floor in computeDiscount, or update spec.",
+    "(Optional) Promote 'Pickup confirmed · BC-####' from a <p> to be the visible DialogTitle (and put the 'You're all set.' line as a secondary heading) for better screen-reader semantics — currently DialogTitle text is 'You're all set.' which is fine but the booking id should arguably be more prominent."
+  ],
+  "critical_code_review_comments": [
+    "BookPickup.jsx is now 1114 lines — well beyond the 700-line guideline. The success/review modal block (lines 934-1108), the SaveIndicator, BookingSummaryList, and coupon section should be extracted into /components/booking/. Future regressions and code review get expensive at this size.",
+    "BookPickup.jsx persistence (line ~367 area) writes full base64 image dataURLs into localStorage on every form keystroke. With 4 × ~5MB images that's >20MB serialised on every notes character. Quota errors will be silent. Recommend (a) debounce save 300ms, (b) split images to a separate localStorage key, (c) catch QuotaExceededError and surface 'Saved locally' → 'Couldn't save' state.",
+    "mockPickups.js loadAllPickups concatenates user pickups in front of seedPickups then sorts by createdAt desc. New pickup createdAt = Date.now() so it correctly bubbles to top — verified. Good.",
+    "PickupDetails.jsx: rendering pickup.images via <img src={img.url}> assumes the shape is {url, name}. saveUserPickup currently stores images as {name, url} where url is a dataURL — consistent. Confirm seed pickups always have images:[] (they do).",
+    "Pickups.jsx counts memo recomputes on every render of `all` but `all` is itself a useMemo([]) so it's fine. However, loadAllPickups() runs once at mount only — if a user books a new pickup then navigates back via in-app history, the list will refresh because the route remount calls useMemo again. Good.",
+    "STATUS_META.cancelled chip uses 'line-through' decoration on the label — visually unusual for a tag. Consider removing line-through; the strike doesn't read as 'cancelled' so much as a typo.",
+    "computeDiscount uses Math.round; with base 149 and 50% this yields 75 (not 74). Total becomes 74. If spec/business wants 'half-price = 75', use Math.floor instead.",
+    "BookPickup.jsx line 367: comment 'Intentionally no toast — success modal communicates the same.' is good — confirms the dedup requirement is met deliberately, not by accident."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (frontend-only)", "frontend": "~96% (one spec/math mismatch ₹74 vs ₹75; everything else passes)"},
+  "test_credentials": "N/A — auth pages stubbed.",
+  "seed_data_creation": "Cleared 'bincycle:booking:draft' and 'bincycle:pickups' between flows. Created two new bookings during the run; they appeared correctly at the top of the Upcoming tab.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All new data-testids verified: pickups-page, pickups-tabs, pickups-tab-upcoming, pickups-tab-completed, pickups-list, pickups-empty, pickups-new-cta, pickup-row-BC-####, status-badge-{scheduled,in_progress,completed,cancelled}, pickup-details-page, pickup-not-found, details-back-link, details-booking-id-label, details-status-{status}, details-field-{date,slot,address,status}, details-notes, details-images-grid, details-images-empty, details-section-{schedule,notes,images,impact}, details-summary-id, details-summary-total, details-reschedule-btn, details-cancel-btn, autosave-indicator (with data-status='saving'|'saved'), image-input, image-previews-grid, image-preview-{0..3}, image-remove-{0..3}, coupon-input, coupon-apply-btn, coupon-applied, coupon-applied-code, coupon-remove-btn, coupon-error, summary-discount-row, summary-fee (with line-through class when discount applied), summary-total, booking-confirm-dialog, booking-success-dialog (BOTH on same DialogContent), confirm-modal-total, success-modal-total, booking-success-id, booking-success-view-btn, booking-success-done-btn. Coupon WELCOME50 → discount ₹75, total ₹74 (not ₹75 as spec text suggested — math: round(149*0.5)=75, 149-75=74). Date picker still capped to 7 enabled days. localStorage keys: 'bincycle:booking:draft', 'bincycle:pickups'. Sidebar 'My Pickups' link is enabled; 'Book Pickup' link is the preceding item.",
+  "rca_of_the_issue": "The single ₹74 vs ₹75 discrepancy is not a bug — it's an arithmetic edge case. 50% of 149 = 74.5; Math.round in JS rounds 0.5 up → 75 discount. Spec author likely computed 149 − 74 = 75 mentally and wrote the result. Two options: (1) accept current ₹74 total and update spec; (2) switch computeDiscount to Math.floor so discount=74, total=75. Either is fine — call it product preference."
+}
