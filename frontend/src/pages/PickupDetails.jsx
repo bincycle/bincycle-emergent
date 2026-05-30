@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { findPickupById, STATUS_META } from "@/lib/mockPickups";
 import { savedAddresses, timeSlots } from "@/lib/mockData";
+import PickupTimeline from "@/components/PickupTimeline";
 
 const findAddress = (id) => savedAddresses.find((a) => a.id === id);
 const findSlot = (id) => timeSlots.find((s) => s.id === id);
@@ -128,13 +129,27 @@ const PickupDetails = () => {
             <div className="mt-10 grid gap-6 lg:grid-cols-12">
                 {/* Main */}
                 <div className="lg:col-span-8 space-y-6">
+                    {/* Tracking timeline */}
+                    <section
+                        data-testid="details-section-timeline"
+                        className="rounded-sm border border-[#D1CDBC] bg-white p-6 sm:p-8"
+                    >
+                        <div className="flex items-center justify-between mb-6">
+                            <p className="font-mono-label text-xs text-[#596155]">
+                                01 · Tracking
+                            </p>
+                            <StatusChip status={pickup.status} />
+                        </div>
+                        <PickupTimeline pickup={pickup} />
+                    </section>
+
                     {/* Schedule + Address */}
                     <section
                         data-testid="details-section-schedule"
                         className="rounded-sm border border-[#D1CDBC] bg-white p-6 sm:p-8"
                     >
                         <p className="font-mono-label text-xs text-[#596155]">
-                            01 · Schedule &amp; location
+                            02 · Schedule &amp; location
                         </p>
                         <div className="mt-5 grid gap-5 sm:grid-cols-2">
                             <Field
@@ -189,7 +204,7 @@ const PickupDetails = () => {
                     >
                         <div className="flex items-center justify-between">
                             <p className="font-mono-label text-xs text-[#596155]">
-                                02 · Notes
+                                03 · Notes
                             </p>
                         </div>
                         <div className="mt-4 flex items-start gap-3">
@@ -218,7 +233,7 @@ const PickupDetails = () => {
                     >
                         <div className="flex items-center justify-between mb-5">
                             <p className="font-mono-label text-xs text-[#596155]">
-                                03 · Pictures
+                                04 · Pictures
                             </p>
                             <p className="font-mono-label text-[10px] text-[#596155]">
                                 {pickup.images?.length || 0} attached
@@ -261,7 +276,7 @@ const PickupDetails = () => {
                                 className="rounded-sm border border-[#D1CDBC] bg-[#171A15] text-[#F7F5F0] p-6 sm:p-8"
                             >
                                 <p className="font-mono-label text-xs text-[#F7F5F0]/60">
-                                    04 · Impact
+                                    05 · Impact
                                 </p>
                                 <div className="mt-5 grid grid-cols-2 gap-6">
                                     <div>

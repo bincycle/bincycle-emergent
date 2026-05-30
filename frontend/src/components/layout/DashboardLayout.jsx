@@ -3,6 +3,7 @@ import { useState } from "react";
 import {
     Calendar,
     Home as HomeIcon,
+    LayoutDashboard,
     Package,
     Receipt,
     Settings,
@@ -17,6 +18,13 @@ import LogoutDialog from "@/components/account/LogoutDialog";
 import { getProfile } from "@/lib/accountStorage";
 
 const navItems = [
+    {
+        to: "/dashboard/overview",
+        label: "Overview",
+        icon: LayoutDashboard,
+        end: false,
+        disabled: false,
+    },
     {
         to: "/dashboard/book-pickup",
         label: "Book Pickup",

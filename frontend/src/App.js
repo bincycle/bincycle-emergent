@@ -1,5 +1,5 @@
 import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 
 import MarketingLayout from "@/components/layout/MarketingLayout";
@@ -22,6 +22,7 @@ import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 import Account from "@/pages/Account";
+import DashboardOverview from "@/pages/DashboardOverview";
 
 function App() {
     return (
@@ -44,6 +45,14 @@ function App() {
                         />
                     </Route>
                     <Route element={<DashboardLayout />}>
+                        <Route
+                            path="/dashboard"
+                            element={<Navigate to="/dashboard/overview" replace />}
+                        />
+                        <Route
+                            path="/dashboard/overview"
+                            element={<DashboardOverview />}
+                        />
                         <Route
                             path="/dashboard/book-pickup"
                             element={<BookPickup />}

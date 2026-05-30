@@ -206,6 +206,7 @@ export const findCoupon = (code) => {
     );
 };
 
+// ----- Pickup tracking timeline -----
 export const computeDiscount = (coupon, baseFee) => {
     if (!coupon) return 0;
     if (coupon.type === "percent") {
@@ -213,4 +214,96 @@ export const computeDiscount = (coupon, baseFee) => {
         return Math.min(Math.floor((baseFee * coupon.value) / 100), baseFee);
     }
     return Math.min(coupon.value, baseFee);
+};
+
+// Returns an ordered list of timeline steps for a given pickup.
+// Each step: { key, label, description, at (ISO or null), state: 'done'|'current'|'upcoming'|'cancelled' }
+export const getPickupTimeline = (pickup) => {
+    if (!pickup) return [];
+    const created = pickup.createdAt;
+    const scheduled = pickup.date;
+
+    const minutes = (iso, m) => {
+        const d = new Date(iso);
+        d.setMinutes(d.getMinutes() + m);
+        return d.toISOString();
+    };
+    const hours = (iso, h) => minutes(iso, h * 60);
+
+    if (pickup.status === "cancelled") {
+        return [
+            {
+                key: "scheduled",
+                label: "Booking received",
+                description: "We received your pickup request.",
+                at: created,
+                state: "done",
+            },
+            {
+                key: "cancelled",
+                label: "Pickup cancelled",
+                description:
+                    "This pickup was cancelled. No charges were applied.",
+                at: hours(created, 2),
+                state: "cancelled",
+            },
+        ];
+    }
+
+    const all = [
+        {
+            key: "scheduled",
+            label: "Booking received",
+            description: "We received your pickup request.",
+            at: created,
+        },
+        {
+            key: "confirmed",
+            label: "Booking confirmed",
+            description: "Slot locked in and assigned to a route.",
+            at: minutes(created, 5),
+        },
+        {
+            key: "driver_assigned",
+            label: "Driver assigned",
+            description:
+                "A Bincycle partner is dispatched to your address window.",
+            at: hours(scheduled, -1),
+        },
+        {
+            key: "in_progress",
+            label: "Pickup in progress",
+            description: "Your partner is on the way / collecting bags.",
+            at: scheduled,
+        },
+        {
+            key: "completed",
+            label: "Recycled",
+            description:
+                "Bags weighed at depot and routed to verified recyclers.",
+            at: hours(scheduled, 2),
+        },
+    ];
+
+    // Mark state based on pickup.status
+    const idxByStatus = {
+        scheduled: 1, // arrived through 'confirmed'
+        in_progress: 3, // partner en route
+        completed: 4,
+    };
+    const currentIdx = idxByStatus[pickup.status] ?? 1;
+
+    return all.map((s, i) => {
+        if (i < currentIdx) return { ...s, state: "done" };
+        if (i === currentIdx) return { ...s, state: "current" };
+        return { ...s, state: "upcoming", at: null };
+    });
+};
+
+// ----- Referral mock -----
+export const referralInfo = {
+    code: "AANYA100",
+    perFriend: 100,
+    friendsJoined: 3,
+    earnedTotal: 300,
 };
