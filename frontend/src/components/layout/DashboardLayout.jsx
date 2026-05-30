@@ -1,4 +1,5 @@
 import { Outlet, NavLink, Link } from "react-router-dom";
+import { useState } from "react";
 import {
     Calendar,
     Home as HomeIcon,
@@ -7,10 +8,13 @@ import {
     Settings,
     LifeBuoy,
     LogOut,
+    User,
 } from "lucide-react";
 import Logo from "@/components/Logo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { mockUser } from "@/lib/mockData";
+import LogoutDialog from "@/components/account/LogoutDialog";
+import { getProfile } from "@/lib/accountStorage";
 
 const navItems = [
     {
@@ -27,11 +31,26 @@ const navItems = [
         end: false,
         disabled: false,
     },
+    {
+        to: "/dashboard/me",
+        label: "Profile",
+        icon: User,
+        end: false,
+        disabled: false,
+    },
     { to: "#", label: "Invoices", icon: Receipt, disabled: true },
     { to: "#", label: "Settings", icon: Settings, disabled: true },
 ];
 
 export const DashboardLayout = () => {
+    const [logoutOpen, setLogoutOpen] = useState(false);
+    const profile = getProfile();
+    const initials = (profile.name || "U")
+        .split(" ")
+        .map((p) => p[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
     return (
         <div className="min-h-screen bg-[#F7F5F0] text-[#121710]">
             <div className="mx-auto flex max-w-[1480px] flex-col lg:flex-row">
@@ -119,22 +138,30 @@ export const DashboardLayout = () => {
                     </nav>
 
                     <div className="m-4 rounded-sm border border-[#D1CDBC] bg-white p-3 flex items-center gap-3">
-                        <Avatar className="h-9 w-9">
-                            <AvatarImage src={mockUser.avatar} />
-                            <AvatarFallback>AR</AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0 flex-1">
-                            <p
-                                className="text-sm font-semibold truncate"
-                                data-testid="sidebar-user-name"
-                            >
-                                {mockUser.name}
-                            </p>
-                            <p className="text-xs text-[#596155] truncate">
-                                {mockUser.plan} plan
-                            </p>
-                        </div>
+                        <Link
+                            to="/dashboard/me"
+                            data-testid="sidebar-profile-link"
+                            className="flex items-center gap-3 min-w-0 flex-1 rounded-sm"
+                        >
+                            <Avatar className="h-9 w-9">
+                                <AvatarImage src={profile.avatar} />
+                                <AvatarFallback>{initials}</AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0 flex-1">
+                                <p
+                                    className="text-sm font-semibold truncate text-[#121710]"
+                                    data-testid="sidebar-user-name"
+                                >
+                                    {profile.name}
+                                </p>
+                                <p className="text-xs text-[#596155] truncate">
+                                    {mockUser.plan} plan
+                                </p>
+                            </div>
+                        </Link>
                         <button
+                            type="button"
+                            onClick={() => setLogoutOpen(true)}
                             aria-label="Sign out"
                             data-testid="sidebar-signout"
                             className="rounded-sm p-2 text-[#596155] hover:text-[#C45B38]"
@@ -151,10 +178,25 @@ export const DashboardLayout = () => {
                 >
                     <Logo />
                     <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                            <AvatarImage src={mockUser.avatar} />
-                            <AvatarFallback>AR</AvatarFallback>
-                        </Avatar>
+                        <Link
+                            to="/dashboard/me"
+                            data-testid="topbar-profile-link"
+                            aria-label="Account"
+                        >
+                            <Avatar className="h-8 w-8">
+                                <AvatarImage src={profile.avatar} />
+                                <AvatarFallback>{initials}</AvatarFallback>
+                            </Avatar>
+                        </Link>
+                        <button
+                            type="button"
+                            onClick={() => setLogoutOpen(true)}
+                            aria-label="Sign out"
+                            data-testid="topbar-signout"
+                            className="rounded-sm p-2 text-[#596155] hover:text-[#C45B38]"
+                        >
+                            <LogOut size={16} />
+                        </button>
                     </div>
                 </header>
 
@@ -162,6 +204,7 @@ export const DashboardLayout = () => {
                     <Outlet />
                 </main>
             </div>
+            <LogoutDialog open={logoutOpen} onOpenChange={setLogoutOpen} />
         </div>
     );
 };

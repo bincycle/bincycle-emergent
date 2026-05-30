@@ -21,6 +21,7 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
+import Account from "@/pages/Account";
 
 function App() {
     return (
@@ -54,6 +55,10 @@ function App() {
                         <Route
                             path="/dashboard/pickups/:id"
                             element={<PickupDetails />}
+                        />
+                        <Route
+                            path="/dashboard/me"
+                            element={<Account />}
                         />
                     </Route>
                     <Route element={<AuthLayout />}>

@@ -1,0 +1,221 @@
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+    User,
+    MapPin,
+    Bell,
+    ShieldCheck,
+    CreditCard,
+    Activity,
+    ChevronRight,
+} from "lucide-react";
+import ProfileTab from "@/components/account/ProfileTab";
+import AddressesTab from "@/components/account/AddressesTab";
+import NotificationsTab from "@/components/account/NotificationsTab";
+import SecurityTab from "@/components/account/SecurityTab";
+import BillingTab from "@/components/account/BillingTab";
+import ActivityTab from "@/components/account/ActivityTab";
+
+const TABS = [
+    {
+        id: "profile",
+        label: "Profile",
+        description: "Avatar, name, contact",
+        icon: User,
+        Component: ProfileTab,
+    },
+    {
+        id: "addresses",
+        label: "Addresses",
+        description: "Saved pickup spots",
+        icon: MapPin,
+        Component: AddressesTab,
+    },
+    {
+        id: "notifications",
+        label: "Notifications",
+        description: "Email, SMS, reminders",
+        icon: Bell,
+        Component: NotificationsTab,
+    },
+    {
+        id: "security",
+        label: "Security",
+        description: "Password, sessions, 2FA",
+        icon: ShieldCheck,
+        Component: SecurityTab,
+    },
+    {
+        id: "billing",
+        label: "Billing",
+        description: "Plan, payments, invoices",
+        icon: CreditCard,
+        Component: BillingTab,
+    },
+    {
+        id: "activity",
+        label: "Activity",
+        description: "Pickups & stats",
+        icon: Activity,
+        Component: ActivityTab,
+    },
+];
+
+const Account = () => {
+    const [params, setParams] = useSearchParams();
+    const initialTab = params.get("tab");
+    const validInitial = TABS.some((t) => t.id === initialTab)
+        ? initialTab
+        : "profile";
+    const [active, setActive] = useState(validInitial);
+
+    useEffect(() => {
+        // Keep URL in sync without polluting history.
+        if (params.get("tab") !== active) {
+            const next = new URLSearchParams(params);
+            next.set("tab", active);
+            setParams(next, { replace: true });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [active]);
+
+    const ActiveComponent =
+        TABS.find((t) => t.id === active)?.Component || ProfileTab;
+
+    return (
+        <div
+            data-testid="account-page"
+            className="px-5 sm:px-10 lg:px-14 py-8 lg:py-12"
+        >
+            <header className="mb-10">
+                <p className="font-mono-label text-xs text-[#596155]">
+                    [ dashboard · account ]
+                </p>
+                <h1 className="mt-3 font-display font-black tracking-tighter text-4xl sm:text-5xl text-[#121710]">
+                    Your account
+                </h1>
+                <p className="mt-3 text-[#596155] max-w-2xl">
+                    Update profile details, manage addresses, tune
+                    notifications, review activity and tighten security — all
+                    in one place.
+                </p>
+            </header>
+
+            <div className="grid gap-8 lg:grid-cols-12">
+                {/* Settings sidebar (lg+) / horizontal scroll (mobile) */}
+                <aside
+                    className="lg:col-span-3"
+                    data-testid="account-settings-nav"
+                >
+                    {/* Mobile / tablet — horizontal pill bar */}
+                    <div className="lg:hidden -mx-1 overflow-x-auto no-scrollbar">
+                        <div
+                            role="tablist"
+                            className="flex gap-2 pb-2 px-1"
+                        >
+                            {TABS.map((t) => {
+                                const Icon = t.icon;
+                                const isActive = t.id === active;
+                                return (
+                                    <button
+                                        key={t.id}
+                                        role="tab"
+                                        aria-selected={isActive}
+                                        onClick={() => setActive(t.id)}
+                                        data-testid={`account-tab-${t.id}-btn`}
+                                        className={`inline-flex shrink-0 items-center gap-2 rounded-sm border px-3 py-2.5 text-sm transition-colors ${
+                                            isActive
+                                                ? "bg-[#171A15] text-[#F7F5F0] border-[#171A15]"
+                                                : "border-[#D1CDBC] bg-white text-[#596155] hover:text-[#121710]"
+                                        }`}
+                                    >
+                                        <Icon size={14} />
+                                        {t.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Desktop — vertical settings list */}
+                    <nav
+                        role="tablist"
+                        aria-label="Account settings"
+                        className="hidden lg:flex lg:flex-col lg:sticky lg:top-8 gap-1 rounded-sm border border-[#D1CDBC] bg-white p-2"
+                    >
+                        {TABS.map((t) => {
+                            const Icon = t.icon;
+                            const isActive = t.id === active;
+                            return (
+                                <button
+                                    key={t.id}
+                                    role="tab"
+                                    aria-selected={isActive}
+                                    onClick={() => setActive(t.id)}
+                                    data-testid={`account-tab-${t.id}-btn`}
+                                    className={`group flex items-center gap-3 rounded-sm px-3 py-3 text-left transition-colors ${
+                                        isActive
+                                            ? "bg-[#171A15] text-[#F7F5F0]"
+                                            : "text-[#121710] hover:bg-[#EDE9DC]"
+                                    }`}
+                                >
+                                    <span
+                                        className={`inline-flex h-8 w-8 items-center justify-center rounded-sm ${
+                                            isActive
+                                                ? "bg-[#284226] text-[#F7F5F0]"
+                                                : "bg-[#EDE9DC] text-[#284226]"
+                                        }`}
+                                    >
+                                        <Icon size={14} />
+                                    </span>
+                                    <span className="flex-1 min-w-0">
+                                        <p className="text-sm font-semibold">
+                                            {t.label}
+                                        </p>
+                                        <p
+                                            className={`text-xs truncate ${
+                                                isActive
+                                                    ? "text-[#F7F5F0]/60"
+                                                    : "text-[#596155]"
+                                            }`}
+                                        >
+                                            {t.description}
+                                        </p>
+                                    </span>
+                                    <ChevronRight
+                                        size={14}
+                                        className={
+                                            isActive
+                                                ? "text-[#F7F5F0]/60"
+                                                : "text-[#596155]"
+                                        }
+                                    />
+                                </button>
+                            );
+                        })}
+                    </nav>
+                </aside>
+
+                <section
+                    className="lg:col-span-9 min-w-0"
+                    data-testid="account-tab-content"
+                >
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={active}
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -6 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            <ActiveComponent />
+                        </motion.div>
+                    </AnimatePresence>
+                </section>
+            </div>
+        </div>
+    );
+};
+
+export default Account;
