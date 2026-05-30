@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Cookie, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -7,19 +7,24 @@ const KEY = "bincycle:cookie-consent";
 
 export const CookieConsent = () => {
     const [visible, setVisible] = useState(false);
+    const { pathname } = useLocation();
+    const suppressed = pathname.startsWith("/executive");
 
     useEffect(() => {
+        if (suppressed) {
+            setVisible(false);
+            return;
+        }
         try {
             const stored = localStorage.getItem(KEY);
             if (!stored) {
-                // small delay so it slides in after page paints
                 const t = setTimeout(() => setVisible(true), 600);
                 return () => clearTimeout(t);
             }
         } catch {
             /* ignore */
         }
-    }, []);
+    }, [suppressed]);
 
     const persist = (choice) => {
         try {

@@ -23,6 +23,13 @@ import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 import Account from "@/pages/Account";
 import DashboardOverview from "@/pages/DashboardOverview";
+import ExecutiveLayout from "@/components/layout/ExecutiveLayout";
+import ExecutiveLogin from "@/pages/executive/ExecutiveLogin";
+import ExecutiveDashboard from "@/pages/executive/ExecutiveDashboard";
+import ExecutivePickups from "@/pages/executive/ExecutivePickups";
+import ExecutivePickupDetails from "@/pages/executive/ExecutivePickupDetails";
+import ExecutiveCompletePickup from "@/pages/executive/ExecutiveCompletePickup";
+import ExecutiveProfile from "@/pages/executive/ExecutiveProfile";
 
 function App() {
     return (
@@ -80,6 +87,32 @@ function App() {
                         <Route
                             path="/reset-password"
                             element={<ResetPassword />}
+                        />
+                    </Route>
+                    <Route
+                        path="/executive/login"
+                        element={<ExecutiveLogin />}
+                    />
+                    <Route element={<ExecutiveLayout />}>
+                        <Route
+                            path="/executive"
+                            element={<ExecutiveDashboard />}
+                        />
+                        <Route
+                            path="/executive/pickups"
+                            element={<ExecutivePickups />}
+                        />
+                        <Route
+                            path="/executive/pickups/:id"
+                            element={<ExecutivePickupDetails />}
+                        />
+                        <Route
+                            path="/executive/pickups/:id/complete"
+                            element={<ExecutiveCompletePickup />}
+                        />
+                        <Route
+                            path="/executive/me"
+                            element={<ExecutiveProfile />}
                         />
                     </Route>
                 </Routes>

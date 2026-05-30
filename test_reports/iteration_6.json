@@ -1,0 +1,31 @@
+{
+  "summary": "End-to-end frontend testing of the new Executive Portal at /executive/*. Verified login (any 4-digit PIN), auth guard redirect, dashboard widgets, bottom nav (4 tabs incl. synthetic Complete), pickup listing with all 3 filters (Assigned default, In progress, Completed), pickup details with status-dependent action bars (Assigned→Accept, On the way→Mark arrived, Arrived→Start collecting → navigates to /complete), 5-step Complete wizard (Items validation, Photos upload UI, Pricing total=weight*rate, Payment toggle UPI QR placeholder ↔ Cash with insufficient-cash validation, Done receipt + status persistence to localStorage), profile page (name/empId/zone) and Sign out clearing localStorage. Cookie banner correctly suppressed on /executive/* and visible on / (customer) routes. Customer auth route /login still loads independently. Tested at mobile viewport 390x844.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Complete pickup / fixed bottom action bar",
+        "issues": [
+          "When toasts stack at bottom-right combined with the fixed bottom action bar above the bottom nav (z-30 plus z-40), the bottom nav tabs can be momentarily occluded by Sonner toasts on mobile — not blocking, but worth noting. Recommend dismissing or relocating action bar/toasts after final completion on the Done step (action bar is already hidden on Done, only toasts overlap)."
+        ]
+      }
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ExecutiveLayout.jsx reads localStorage directly inside ExecutiveBottomNav render to compute the synthetic Complete href; this is fine for a mock but the value is stale across pickup updates within the same nav mount (the value is recomputed on remount). Consider moving it inside an effect or recomputing on pathname change.",
+    "ExecutiveCompletePickup.confirm uses setTimeout(700ms) to simulate finalising — fine for demo, but ensure tests account for this delay (already handled here).",
+    "Item Select uses shadcn Select which renders a portal — selectors using get_by_role('option', name=...) work; just a note for future tests.",
+    "advanceStatus on the 'pricing' step moves status to 'payment_pending' and drops the subtotal/label/rate fields from items via destructuring — readable but could be a util to avoid recomputation. Non-blocking."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "N/A (skipped per request)", "frontend": "100%" },
+  "test_credentials": "Login: empId 'EXEC-0042' (prefilled) + any 4-digit PIN, e.g. '1234'. No backend.",
+  "seed_data_creation": "None. Mock pickups seeded automatically into localStorage by executiveMock.loadPickups() (EXP-9034 on_the_way, EXP-9035/9036 assigned, EXP-9020/9021 completed).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All Executive Portal flows verified working at mobile viewport 390x844. Between tests, clear localStorage keys 'bincycle:executive:auth' and 'bincycle:executive:pickups' (and 'bincycle:cookie-consent' if testing cookie banner). The synthetic Complete tab in bottom nav routes by reading 'bincycle:executive:pickups' on remount; navigating via bottom nav after status changes will auto-pick the most actionable pickup."
+}
