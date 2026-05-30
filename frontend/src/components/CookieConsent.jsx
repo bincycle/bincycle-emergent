@@ -8,7 +8,8 @@ const KEY = "bincycle:cookie-consent";
 export const CookieConsent = () => {
     const [visible, setVisible] = useState(false);
     const { pathname } = useLocation();
-    const suppressed = pathname.startsWith("/executive");
+    const suppressed =
+        pathname.startsWith("/executive") || pathname.startsWith("/admin");
 
     useEffect(() => {
         if (suppressed) {

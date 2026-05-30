@@ -30,6 +30,16 @@ import ExecutivePickups from "@/pages/executive/ExecutivePickups";
 import ExecutivePickupDetails from "@/pages/executive/ExecutivePickupDetails";
 import ExecutiveCompletePickup from "@/pages/executive/ExecutiveCompletePickup";
 import ExecutiveProfile from "@/pages/executive/ExecutiveProfile";
+import AdminLayout from "@/components/layout/AdminLayout";
+import AdminLogin from "@/pages/admin/AdminLogin";
+import AdminOverview from "@/pages/admin/AdminOverview";
+import AdminPickups from "@/pages/admin/AdminPickups";
+import AdminPickupDetails from "@/pages/admin/AdminPickupDetails";
+import AdminExecutives from "@/pages/admin/AdminExecutives";
+import AdminExecutiveDetails from "@/pages/admin/AdminExecutiveDetails";
+import AdminCustomers from "@/pages/admin/AdminCustomers";
+import AdminCustomerDetails from "@/pages/admin/AdminCustomerDetails";
+import AdminProfile from "@/pages/admin/AdminProfile";
 
 function App() {
     return (
@@ -113,6 +123,48 @@ function App() {
                         <Route
                             path="/executive/me"
                             element={<ExecutiveProfile />}
+                        />
+                    </Route>
+                    <Route
+                        path="/admin/login"
+                        element={<AdminLogin />}
+                    />
+                    <Route element={<AdminLayout />}>
+                        <Route
+                            path="/admin"
+                            element={<Navigate to="/admin/overview" replace />}
+                        />
+                        <Route
+                            path="/admin/overview"
+                            element={<AdminOverview />}
+                        />
+                        <Route
+                            path="/admin/pickups"
+                            element={<AdminPickups />}
+                        />
+                        <Route
+                            path="/admin/pickups/:id"
+                            element={<AdminPickupDetails />}
+                        />
+                        <Route
+                            path="/admin/executives"
+                            element={<AdminExecutives />}
+                        />
+                        <Route
+                            path="/admin/executives/:id"
+                            element={<AdminExecutiveDetails />}
+                        />
+                        <Route
+                            path="/admin/customers"
+                            element={<AdminCustomers />}
+                        />
+                        <Route
+                            path="/admin/customers/:id"
+                            element={<AdminCustomerDetails />}
+                        />
+                        <Route
+                            path="/admin/me"
+                            element={<AdminProfile />}
                         />
                     </Route>
                 </Routes>
