@@ -113,3 +113,11 @@ P2
 - **LogoutDialog** wired to sidebar + mobile topbar signout buttons — confirm clears local data and routes to `/login`.
 - Responsive: desktop uses a vertical settings sidebar; tablet/mobile uses a horizontal scrollable pill bar (duplicated testids now suffixed `-mobile`).
 - Testing agent: **100% (17/17)**. Two cosmetic fixes applied (invoice-row testid renamed to spec, notifications save flash fixed); 2FA persistence and SecurityTab file split kept as backlog.
+
+## Implemented (2026-02-29 +++) — Dashboard Overview + Pickup Timeline
+- Removed the **Activity** tab from `/dashboard/me` (its content lives in the new overview page now).
+- New primary dashboard at `/dashboard/overview` (with `/dashboard` redirecting there) including: personalised greeting + plan summary, 4 stat cards (Total / Upcoming / Completed / Savings), upcoming pickups list with status chips + "View all", a merged Recent Activity feed (bookings, status changes, coupon usage), prominent **Referral Card** ("Refer a friend, earn ₹100 off") with `AANYA100` code + Copy (clipboard) + Share (`navigator.share` with clipboard fallback) + friends/earned stats, and 4 Quick Actions (Schedule Pickup, View My Pickups, Manage Addresses, Account Settings).
+- Sidebar gained an **Overview** item (top) using the `LayoutDashboard` icon.
+- New **`PickupTimeline`** component on `/dashboard/pickups/:id` (section 01 Tracking) renders steps Booking received → Booking confirmed → Driver assigned → Pickup in progress → Recycled, with done / current (pulsing terracotta) / upcoming dashed / cancelled states. Cancelled bookings collapse to a 2-step timeline. `getPickupTimeline()` lives in `lib/mockPickups.js` and derives timestamps from `createdAt` and `date`.
+- Section numbering on details page now: 01 Tracking, 02 Schedule, 03 Notes, 04 Pictures, 05 Impact.
+- Testing agent: **97.9% (46/47)** — one real bug found and fixed: completed pickups previously rendered the final Recycled step as 'current' (pulsing); `getPickupTimeline` now special-cases `completed` to mark all 5 steps `done`.

@@ -285,11 +285,15 @@ export const getPickupTimeline = (pickup) => {
         },
     ];
 
+    if (pickup.status === "completed") {
+        // Every step done — booking is finished, nothing should pulse.
+        return all.map((s) => ({ ...s, state: "done" }));
+    }
+
     // Mark state based on pickup.status
     const idxByStatus = {
         scheduled: 1, // arrived through 'confirmed'
         in_progress: 3, // partner en route
-        completed: 4,
     };
     const currentIdx = idxByStatus[pickup.status] ?? 1;
 
