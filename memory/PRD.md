@@ -131,3 +131,15 @@ P2
 - **Executive profile**: name, EXEC-0042, phone, zone (Bengaluru East), vehicle (EV-T-018), rating, today's performance grid (pickups · kg · earnings) and Sign out button.
 - **Cookie consent banner** now suppressed on /executive/* routes so it doesn't intercept clicks on the partner app.
 - Testing agent: **100% (frontend)** — no functional issues found. Minor noted: toast stack can overlap the fixed bottom nav momentarily on mobile (cosmetic).
+
+
+## Implemented (2026-02-30) — Account dashboard finalised + re-added Activity tab
+- Resumed wiring after fork: confirmed `/dashboard/me` route in `App.js`, sidebar **Profile** link + LogoutDialog trigger in `DashboardLayout.jsx`.
+- Re-added **Activity** tab to `Account.jsx` (Total / Completed / Diverted kg / Coupon savings stats, Upcoming + Recently completed pickup lists, recently used promo codes). Account dashboard now ships with **6 tabs**: Profile · Addresses · Notifications · Security · Billing · Activity.
+- Testing agent iteration 7: **100% (30/30)** — Account tabs, URL `?tab=` sync, ProfileTab edit + persistence, NotificationsTab toggle persistence, LogoutDialog open/cancel/confirm flow, mobile pill-bar at 390px, and full regression on dashboard / marketing / auth routes all passed. No backend touched.
+
+## Backlog / Next
+- P2: Lift `getProfile()` in `DashboardLayout` into state so the sidebar avatar/name updates instantly after a ProfileTab save.
+- P2: React to manual `?tab=` URL changes inside `Account.jsx`.
+- P2: Split `SecurityTab.jsx` into Password / Sessions / Login-history / Danger Zone sub-components.
+- P2: 2FA persistence (currently toggle is local-state only).
