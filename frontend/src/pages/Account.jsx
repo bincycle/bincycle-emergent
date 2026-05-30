@@ -7,6 +7,7 @@ import {
     Bell,
     ShieldCheck,
     CreditCard,
+    Activity as ActivityIcon,
     ChevronRight,
 } from "lucide-react";
 import ProfileTab from "@/components/account/ProfileTab";
@@ -14,6 +15,7 @@ import AddressesTab from "@/components/account/AddressesTab";
 import NotificationsTab from "@/components/account/NotificationsTab";
 import SecurityTab from "@/components/account/SecurityTab";
 import BillingTab from "@/components/account/BillingTab";
+import ActivityTab from "@/components/account/ActivityTab";
 
 const TABS = [
     {
@@ -50,6 +52,13 @@ const TABS = [
         description: "Plan, payments, invoices",
         icon: CreditCard,
         Component: BillingTab,
+    },
+    {
+        id: "activity",
+        label: "Activity",
+        description: "Pickups, coupons, impact",
+        icon: ActivityIcon,
+        Component: ActivityTab,
     },
 ];
 
