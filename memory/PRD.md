@@ -89,3 +89,15 @@ P2
   - **Clear draft** button shows when any field is set.
   - **In-modal success state** after "Confirm pickup": the same Dialog swaps to a green confirmation card showing BC-#### id, the booking summary, and a "What happens next" steps list. No redirect. Closing the modal resets the form for a fresh booking.
 - Testing agent passed 43/44 checks; the single fail was a test-script timing flake (persistence verified manually). Two cosmetic suggestions applied: `DialogTitle` now wraps the visible success heading for a11y, and `ResetPassword` properly renders an invalid-token panel when `?token` is missing.
+
+## Implemented (2026-02-29 +) — Pickups list/details, coupons, multi-image, autosave UX
+- New routes: `/dashboard/pickups` (default Upcoming filter; toggle for Completed; status badges per row) and `/dashboard/pickups/:id` (full booking info with status chip, schedule, notes, image grid, impact stats for completed bookings, right-side summary with fee/discount/total).
+- `lib/mockPickups.js` now owns seed pickup data, user-pickup localStorage helpers (`bincycle:pickups`), status meta, and coupons (`WELCOME50`, `GREEN20`, `NEWYEAR10`, `FIRSTPICKUP`).
+- BookPickup upgrades:
+  - **Multiple image uploads** (up to 4, 5 MB each) with grid previews + per-image remove + persisted into the same draft key.
+  - **Promo code** input in summary aside with mock validate / apply / remove and dynamic discount + strike-through fee.
+  - **Autosave indicator** ("Saving…" → "Saved locally · HH:mm") near the page header. Debounced save 350ms; clears on empty form.
+  - **Success modal refactored** to share the same `DialogContent` shell, header pattern, `BookingSummaryList`, and footer style as the review modal — feels like the next step of the same flow. Duplicate `toast.success` removed; success modal adds **View pickup** (navigates to `/dashboard/pickups/:id`) and **Done** (resets form).
+  - On confirm, the booking is persisted to `bincycle:pickups` and appears at the top of the Upcoming list.
+- Sidebar "My Pickups" link now active and routes to the list.
+- Testing agent: **~96% (26/27)**; single mismatch was a 50%-off rounding choice — switched `computeDiscount` to `Math.floor` so 50% off ₹149 → ₹75 total. Also removed line-through from the cancelled-status chip per code review.

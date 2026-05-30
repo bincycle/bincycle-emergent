@@ -161,7 +161,7 @@ export const STATUS_META = {
     cancelled: {
         label: "Cancelled",
         dot: "bg-[#171A15]",
-        chip: "bg-[#171A15]/10 text-[#171A15] border-[#171A15]/30 line-through",
+        chip: "bg-[#171A15]/10 text-[#171A15] border-[#171A15]/30",
     },
 };
 
@@ -209,7 +209,8 @@ export const findCoupon = (code) => {
 export const computeDiscount = (coupon, baseFee) => {
     if (!coupon) return 0;
     if (coupon.type === "percent") {
-        return Math.min(Math.round((baseFee * coupon.value) / 100), baseFee);
+        // Math.floor so e.g. 50% off ₹149 → ₹74 discount → clean ₹75 total
+        return Math.min(Math.floor((baseFee * coupon.value) / 100), baseFee);
     }
     return Math.min(coupon.value, baseFee);
 };
