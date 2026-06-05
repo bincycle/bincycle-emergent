@@ -86,7 +86,7 @@ const Account = () => {
     return (
         <div
             data-testid="account-page"
-            className="px-4 sm:px-8 lg:px-14 py-6 sm:py-10 lg:py-12"
+            className="px-4 sm:px-8 lg:px-14 py-6 sm:py-10 lg:py-12 overflow-x-hidden"
         >
             <header className="mb-6 sm:mb-10">
                 <p className="font-mono-label text-[10px] sm:text-xs text-[#596155]">
@@ -105,7 +105,7 @@ const Account = () => {
             <div className="grid gap-5 sm:gap-6 lg:gap-8 lg:grid-cols-12">
                 {/* Settings sidebar (lg+) / horizontal scroll (mobile) */}
                 <aside
-                    className="lg:col-span-3"
+                    className="lg:col-span-3 min-w-0"
                     data-testid="account-settings-nav"
                 >
                     {/* Mobile / tablet — horizontal pill bar */}
@@ -198,7 +198,7 @@ const Account = () => {
                 </aside>
 
                 <section
-                    className="lg:col-span-9 min-w-0"
+                    className="lg:col-span-9 min-w-0 overflow-x-hidden"
                     data-testid="account-tab-content"
                 >
                     <AnimatePresence mode="wait">
