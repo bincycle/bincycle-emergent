@@ -70,22 +70,22 @@ const deviceIcon = (platform = "") => {
 const SectionCard = ({ title, description, children, testId, tone }) => (
     <section
         data-testid={testId}
-        className={`rounded-sm border p-6 sm:p-8 ${
+        className={`rounded-sm border p-4 sm:p-6 lg:p-8 ${
             tone === "danger"
                 ? "border-[#C45B38] bg-[#C45B38]/5"
                 : "border-[#D1CDBC] bg-white"
         }`}
     >
-        <div className="mb-5">
+        <div className="mb-4 sm:mb-5">
             <h3
-                className={`font-display text-lg font-bold tracking-tight ${
+                className={`font-display text-base sm:text-lg font-bold tracking-tight ${
                     tone === "danger" ? "text-[#C45B38]" : "text-[#121710]"
                 }`}
             >
                 {title}
             </h3>
             {description && (
-                <p className="mt-1 text-sm text-[#596155]">{description}</p>
+                <p className="mt-1 text-xs sm:text-sm text-[#596155]">{description}</p>
             )}
         </div>
         {children}
@@ -624,12 +624,12 @@ const DangerZoneSection = () => {
 };
 
 export const SecurityTab = () => (
-    <div data-testid="account-tab-security" className="space-y-5">
-        <header className="pb-6 mb-2 border-b border-[#D1CDBC]">
-            <h2 className="font-display text-2xl font-bold tracking-tight text-[#121710]">
+    <div data-testid="account-tab-security" className="space-y-4 sm:space-y-5">
+        <header className="pb-4 sm:pb-6 mb-1 sm:mb-2 border-b border-[#D1CDBC]">
+            <h2 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-[#121710]">
                 Security
             </h2>
-            <p className="mt-1 text-sm text-[#596155]">
+            <p className="mt-1 text-xs sm:text-sm text-[#596155]">
                 Keep your account safe. Updates here apply only on this device
                 in this preview.
             </p>

@@ -22,6 +22,7 @@ import {
     STATUS_DESCRIPTION,
 } from "@/lib/executiveMock";
 import ExecStatusBadge from "@/components/executive/ExecStatusBadge";
+import SwipeToConfirm from "@/components/SwipeToConfirm";
 
 const ExecutivePickupDetails = () => {
     const { id } = useParams();
@@ -66,60 +67,57 @@ const ExecutivePickupDetails = () => {
         if (s === "assigned")
             return (
                 <ActionBar
-                    primary={{
-                        label: "Accept pickup",
-                        icon: PackageCheck,
-                        onClick: () => advance("accepted"),
-                        testId: "exec-action-accept",
-                    }}
+                    label="Slide to accept pickup"
+                    icon={PackageCheck}
+                    onConfirm={() => advance("accepted")}
+                    testId="exec-action-accept"
                 />
             );
         if (s === "accepted")
             return (
                 <ActionBar
-                    primary={{
-                        label: "Start pickup · On the way",
-                        icon: Truck,
-                        onClick: () => advance("on_the_way"),
-                        testId: "exec-action-on-the-way",
-                    }}
+                    label="Slide to start the trip"
+                    confirmLabel="On the way"
+                    icon={Truck}
+                    onConfirm={() => advance("on_the_way")}
+                    testId="exec-action-on-the-way"
                 />
             );
         if (s === "on_the_way")
             return (
                 <ActionBar
-                    primary={{
-                        label: "Mark arrived",
-                        icon: MapPinned,
-                        onClick: () => advance("arrived"),
-                        testId: "exec-action-arrived",
-                    }}
+                    label="Slide to mark arrived"
+                    confirmLabel="Arrived"
+                    icon={MapPinned}
+                    onConfirm={() => advance("arrived")}
+                    testId="exec-action-arrived"
                 />
             );
         if (s === "arrived")
             return (
                 <ActionBar
-                    primary={{
-                        label: "Start collecting",
-                        icon: Play,
-                        onClick: () => {
-                            advanceStatus(id, "collecting");
-                            navigate(`/executive/pickups/${id}/complete`);
-                        },
-                        testId: "exec-action-start-collecting",
+                    label="Slide to start collecting"
+                    confirmLabel="Let's go"
+                    icon={Play}
+                    tone="success"
+                    onConfirm={() => {
+                        advanceStatus(id, "collecting");
+                        navigate(`/executive/pickups/${id}/complete`);
                     }}
+                    testId="exec-action-start-collecting"
                 />
             );
         // Mid-flow: collecting / payment_pending → continue completion
         return (
             <ActionBar
-                primary={{
-                    label: "Continue completion",
-                    icon: ArrowRight,
-                    onClick: () =>
-                        navigate(`/executive/pickups/${id}/complete`),
-                    testId: "exec-action-continue",
-                }}
+                label="Slide to continue completion"
+                confirmLabel="Opening..."
+                icon={ArrowRight}
+                tone="success"
+                onConfirm={() =>
+                    navigate(`/executive/pickups/${id}/complete`)
+                }
+                testId="exec-action-continue"
             />
         );
     };
@@ -341,19 +339,18 @@ const ExecTimeline = ({ pickup }) => {
     );
 };
 
-const ActionBar = ({ primary }) => {
-    const Icon = primary.icon;
+const ActionBar = ({ label, confirmLabel, icon, tone, onConfirm, testId }) => {
     return (
         <div className="fixed inset-x-0 bottom-20 z-30 px-5">
             <div className="mx-auto max-w-md">
-                <button
-                    type="button"
-                    onClick={primary.onClick}
-                    data-testid={primary.testId}
-                    className="w-full inline-flex h-14 items-center justify-center gap-2 rounded-sm bg-[#C45B38] text-base font-medium text-[#F7F5F0] hover:bg-[#A64A2B] shadow-lg shadow-black/20 transition-colors"
-                >
-                    <Icon size={18} /> {primary.label}
-                </button>
+                <SwipeToConfirm
+                    label={label}
+                    confirmLabel={confirmLabel}
+                    icon={icon}
+                    tone={tone || "primary"}
+                    onConfirm={onConfirm}
+                    testId={testId}
+                />
             </div>
         </div>
     );

@@ -16,6 +16,7 @@ import {
     BadgePercent,
     Loader2,
     CheckCircle,
+    Camera,
 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -54,6 +55,7 @@ import {
     computeDiscount,
     saveUserPickup,
 } from "@/lib/mockPickups";
+import CameraCaptureDialog from "@/components/CameraCaptureDialog";
 
 const BASE_FEE = 149;
 const MAX_IMAGES = 4;
@@ -176,6 +178,7 @@ const BookPickup = () => {
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [dialogStep, setDialogStep] = useState("review"); // 'review' | 'success'
     const [bookingId, setBookingId] = useState(null);
+    const [cameraOpen, setCameraOpen] = useState(false);
 
     const [hydrated, setHydrated] = useState(false);
     const [saveStatus, setSaveStatus] = useState("idle"); // idle | saving | saved
@@ -299,6 +302,22 @@ const BookPickup = () => {
 
     const removeImage = (idx) => {
         setImages((prev) => prev.filter((_, i) => i !== idx));
+    };
+
+    const onCameraCapture = (img) => {
+        if (images.length >= MAX_IMAGES) {
+            toast.error(`You can attach up to ${MAX_IMAGES} pictures.`);
+            return;
+        }
+        setImages((prev) => [...prev, img]);
+    };
+
+    const openCamera = () => {
+        if (images.length >= MAX_IMAGES) {
+            toast.error(`You can attach up to ${MAX_IMAGES} pictures.`);
+            return;
+        }
+        setCameraOpen(true);
     };
 
     const clearAllImages = () => {
@@ -714,34 +733,56 @@ const BookPickup = () => {
                         )}
 
                         {images.length < MAX_IMAGES && (
-                            <label
-                                htmlFor="images"
-                                data-testid="image-upload-label"
-                                className="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-sm border-2 border-dashed border-[#D1CDBC] bg-[#F7F5F0] text-center transition-colors hover:border-[#284226] hover:bg-[#EDE9DC]"
+                            <div
+                                data-testid="picture-actions"
+                                className="grid gap-3 sm:grid-cols-2"
                             >
-                                <UploadCloud
-                                    size={22}
-                                    className="text-[#596155]"
-                                />
-                                <p className="mt-2 text-sm text-[#121710] font-medium">
-                                    {images.length === 0
-                                        ? "Drop images or click to browse"
-                                        : "Add more pictures"}
-                                </p>
-                                <p className="text-xs text-[#596155]">
-                                    PNG / JPG · up to {MAX_IMAGE_MB} MB each
-                                </p>
-                                <input
-                                    id="images"
-                                    ref={fileInputRef}
-                                    type="file"
-                                    accept="image/*"
-                                    multiple
-                                    onChange={onPickImages}
-                                    data-testid="image-input"
-                                    className="sr-only"
-                                />
-                            </label>
+                                <label
+                                    htmlFor="images"
+                                    data-testid="image-upload-label"
+                                    className="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-sm border-2 border-dashed border-[#D1CDBC] bg-[#F7F5F0] text-center transition-colors hover:border-[#284226] hover:bg-[#EDE9DC]"
+                                >
+                                    <UploadCloud
+                                        size={22}
+                                        className="text-[#596155]"
+                                    />
+                                    <p className="mt-2 text-sm text-[#121710] font-medium">
+                                        {images.length === 0
+                                            ? "Upload from device"
+                                            : "Add more from device"}
+                                    </p>
+                                    <p className="text-xs text-[#596155]">
+                                        PNG / JPG · up to {MAX_IMAGE_MB} MB each
+                                    </p>
+                                    <input
+                                        id="images"
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        multiple
+                                        onChange={onPickImages}
+                                        data-testid="image-input"
+                                        className="sr-only"
+                                    />
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={openCamera}
+                                    data-testid="open-camera-btn"
+                                    className="group flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-sm border-2 border-dashed border-[#D1CDBC] bg-[#171A15] text-center text-[#F7F5F0] transition-colors hover:border-[#C45B38] hover:bg-[#121710]"
+                                >
+                                    <Camera
+                                        size={22}
+                                        className="text-[#F7F5F0]/80 group-hover:text-[#C45B38]"
+                                    />
+                                    <p className="mt-2 text-sm font-medium">
+                                        Capture with camera
+                                    </p>
+                                    <p className="text-xs text-[#F7F5F0]/60">
+                                        Takes a photo right here
+                                    </p>
+                                </button>
+                            </div>
                         )}
                     </section>
                 </div>
@@ -1106,6 +1147,11 @@ const BookPickup = () => {
                     )}
                 </DialogContent>
             </Dialog>
+            <CameraCaptureDialog
+                open={cameraOpen}
+                onOpenChange={setCameraOpen}
+                onCapture={onCameraCapture}
+            />
         </div>
     );
 };

@@ -1,0 +1,51 @@
+{
+  "summary": "Frontend-only testing of 3 PR scope items: (1) SwipeToConfirm slider on /executive/pickups/EXP-9035, (2) camera-only photos step on /complete, (3) /dashboard/me mobile responsiveness at 390px. Items (1) and (2) PASS fully. Item (3) FAILS — page still has ~300px horizontal overflow at 390px viewport across every tab. Account mobile responsiveness fix did NOT actually constrain the layout.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Account.jsx / mobile layout",
+        "issue": "Horizontal overflow at 390x844: document.scrollWidth=690 while clientWidth=390 (≈300px overflow). Affects every tab (profile, addresses, notifications, security, billing, activity). Offending elements observed: ASIDE#account-settings-nav (width=658), SECTION#account-tab-content (width=658), and mobile pill bar div with class '-mx-4 sm:-mx-8 overflow-x-auto no-scrollbar' (width=690). The PR claimed to fix this but it remains broken. Visible symptom: KPI cards on activity tab, dark plan card on billing tab, and password inputs on security (rendered 624px wide!) all extend past the viewport.",
+        "selector": "aside#account-settings-nav, section#account-tab-content",
+        "priority": "HIGH"
+      },
+      {
+        "component": "Account.jsx mobile pill bar",
+        "issue": "Pill bar div uses '-mx-4 sm:-mx-8 overflow-x-auto'. Negative horizontal margins of 16px each side make this row 32px wider than its parent. Combined with the parent already being 658px on a 390 viewport, the pill bar itself reports width=690. The bar is supposed to be the horizontal-scroll affordance, but because its parent is already too wide, the whole document scrolls.",
+        "selector": "div.lg:hidden.-mx-4",
+        "priority": "MEDIUM"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "/dashboard/me at 390px (any tab)",
+        "issues": [
+          "Whole layout overflows ~300px to the right; tab content area renders at 658px (~168% of viewport).",
+          "Inputs in Security tab render at 624px wide (should be ~358).",
+          "Dark plan card in Billing renders at 658px (should be ≤358)."
+        ]
+      }
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Fix the /dashboard/me responsive layout: the desktop grid (lg:grid-cols-12 + lg:col-span-3 / lg:col-span-9) collapses to default block on mobile, but a child of section#account-tab-content is forcing min-content > viewport. Likely culprits: KPI grid in ActivityTab, plan card in BillingTab, login-history table in SecurityTab, or the form inputs in ProfileTab using fixed widths. Add 'min-w-0' to the grid container/columns and wrap any wide tables/grids in `overflow-x-auto` containers, OR explicitly set the outer page container to `w-full max-w-full overflow-x-hidden` so the body cannot scroll horizontally. Verified at 390x844 (iPhone 12) viewport.",
+    "Verify with: `document.documentElement.scrollWidth === document.documentElement.clientWidth` should be true at 390px on every tab."
+  ],
+  "critical_code_review_comments": [
+    "SwipeToConfirm threshold logic correctly uses progress >= threshold (0.9) and resets if released early. Tested: 50% drag does NOT advance; 100% drag does. Good.",
+    "SwipeToConfirm has setTimeout(220ms) delay before invoking onConfirm — fine UX, but tests need to wait ≥500ms after mouse.up to observe state change. Documented in test plan.",
+    "ExecutiveCompletePickup correctly removed type='file' inputs from photos step — verified zero file inputs present. exec-photos-upload testid is gone. Only exec-photos-camera-btn remains and opens CameraCaptureDialog (camera-error fallback shows in CI).",
+    "Payment step: back button correctly hidden on payment, exec-payment-swipe present with 'Slide to confirm ₹{total}' label. Full payment swipe completes the flow and renders exec-receipt + exec-step-done-section.",
+    "Account.jsx mobile fix is incomplete — page still produces ~300px horizontal overflow on every tab at 390px. The H1 sizing (text-3xl=30px) is correct but the underlying grid/content widths were not actually constrained."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "75%"},
+  "test_credentials": "Executive: any 4-digit PIN at /executive/login (used 1234).",
+  "seed_data_creation": "Used existing EXP-9035 mock pickup. Through the test, EXP-9035 was advanced assigned→accepted→on_the_way→arrived→collecting→payment_pending→completed (persisted to localStorage 'bincycle:exec:pickups').",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Verified PASS: (a) Swipe slider on /executive/pickups/EXP-9035 — partial-drag does NOT confirm (testid stays 'exec-action-accept'); full-drag advances to 'exec-action-on-the-way' with label 'Slide to start the trip'; subsequent sliders (exec-action-arrived, exec-action-start-collecting) render and navigate to /complete. (b) Photos step at /complete: zero file inputs, exec-photos-upload absent, only exec-photos-camera-btn opens CameraCaptureDialog (camera-error fallback shown). (c) Payment swipe (exec-payment-swipe) with 'Slide to confirm ₹{total}' confirms and shows exec-receipt + exec-step-done-section. Back button correctly hidden on payment step. Regression: /executive/pickups/EXP-9035 still shows phone, directions, timeline; /dashboard/book-pickup loads; /admin/login loads. ONLY FAILING ITEM: /dashboard/me horizontal overflow at 390px — see ui_bugs.",
+  "rca of the issue": "Horizontal overflow on /dashboard/me at 390px: Despite SectionCard padding being reduced to p-4 and H1 to text-3xl on mobile, the parent grid columns (lg:col-span-3 / lg:col-span-9) collapse to default block width on mobile but child content (KPI grid in Activity, plan card in Billing with bg-[#171A15], password inputs in Security) is forcing min-content to ~658px. The pill bar's -mx-4 negative margin then expands width to 690px = scrollWidth. Mitigation: add min-w-0 to the grid container + columns, wrap wide children in overflow-x-auto, and consider overflow-x-hidden on the outermost page wrapper."
+}

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
 import {
@@ -6,7 +6,7 @@ import {
     ArrowRight,
     Plus,
     Trash2,
-    UploadCloud,
+    Camera,
     X,
     Check,
     QrCode,
@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
     Select,
     SelectContent,
@@ -34,7 +33,8 @@ import {
     ITEM_CATEGORIES,
     computePricing,
 } from "@/lib/executiveMock";
-import { fileToDataUrl } from "@/lib/bookingPersistence";
+import CameraCaptureDialog from "@/components/CameraCaptureDialog";
+import SwipeToConfirm from "@/components/SwipeToConfirm";
 
 const STEPS = [
     { id: "items", label: "Items" },
@@ -65,7 +65,9 @@ const ExecutiveCompletePickup = () => {
     const [cashReceived, setCashReceived] = useState("");
     const [step, setStep] = useState("items");
     const [submitting, setSubmitting] = useState(false);
-    const fileInputRef = useRef(null);
+    const [cameraOpen, setCameraOpen] = useState(false);
+
+    const MAX_PHOTOS = 6;
 
     const pricing = useMemo(
         () =>
@@ -106,29 +108,17 @@ const ExecutiveCompletePickup = () => {
             prev.length > 1 ? prev.filter((_, i) => i !== idx) : prev
         );
 
-    const pickPhotos = async (e) => {
-        const files = Array.from(e.target.files || []);
-        if (!files.length) return;
-        const room = 6 - photos.length;
-        const accepted = files.slice(0, Math.max(0, room));
-        const next = [];
-        for (const file of accepted) {
-            if (file.size > 5 * 1024 * 1024) {
-                toast.error(`${file.name} is over 5 MB — skipped.`);
-                continue;
-            }
-            try {
-                const url = await fileToDataUrl(file);
-                next.push({
-                    name: file.name,
-                    type: file.type,
-                    size: file.size,
-                    url,
-                });
-            } catch {}
+    const onCameraCapture = (img) => {
+        setPhotos((prev) =>
+            prev.length >= MAX_PHOTOS ? prev : [...prev, img]
+        );
+    };
+    const openCamera = () => {
+        if (photos.length >= MAX_PHOTOS) {
+            toast.error(`You can capture up to ${MAX_PHOTOS} photos.`);
+            return;
         }
-        setPhotos((prev) => [...prev, ...next]);
-        if (fileInputRef.current) fileInputRef.current.value = "";
+        setCameraOpen(true);
     };
     const removePhoto = (i) =>
         setPhotos((prev) => prev.filter((_, idx) => idx !== i));
@@ -419,34 +409,26 @@ const ExecutiveCompletePickup = () => {
                                 ))}
                             </div>
                         )}
-                        {photos.length < 6 && (
-                            <label
-                                htmlFor="exec-photos"
-                                data-testid="exec-photos-upload"
-                                className="flex h-32 cursor-pointer flex-col items-center justify-center rounded-sm border-2 border-dashed border-[#D1CDBC] bg-white text-center hover:border-[#284226]"
+                        {photos.length < MAX_PHOTOS && (
+                            <button
+                                type="button"
+                                onClick={openCamera}
+                                data-testid="exec-photos-camera-btn"
+                                className="flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-sm border-2 border-dashed border-[#D1CDBC] bg-[#171A15] text-center text-[#F7F5F0] transition-colors hover:border-[#C45B38] hover:bg-[#121710]"
                             >
-                                <UploadCloud
+                                <Camera
                                     size={22}
-                                    className="text-[#596155]"
+                                    className="text-[#F7F5F0]/80"
                                 />
-                                <p className="mt-2 text-sm text-[#121710] font-medium">
+                                <p className="mt-2 text-sm font-medium">
                                     {photos.length === 0
-                                        ? "Tap to add proof photos"
-                                        : "Add more"}
+                                        ? "Capture proof with camera"
+                                        : "Capture another photo"}
                                 </p>
-                                <p className="text-xs text-[#596155]">
-                                    Up to 6 · 5 MB each
+                                <p className="text-xs text-[#F7F5F0]/60">
+                                    Camera only · uploads disabled
                                 </p>
-                                <input
-                                    id="exec-photos"
-                                    ref={fileInputRef}
-                                    type="file"
-                                    accept="image/*"
-                                    multiple
-                                    onChange={pickPhotos}
-                                    className="sr-only"
-                                />
-                            </label>
+                            </button>
                         )}
                     </section>
                 )}
@@ -691,7 +673,7 @@ const ExecutiveCompletePickup = () => {
             {step !== "done" && (
                 <div className="fixed inset-x-0 bottom-20 z-30 px-5">
                     <div className="mx-auto max-w-md flex gap-2">
-                        {stepIdx > 0 && (
+                        {stepIdx > 0 && step !== "payment" && (
                             <button
                                 type="button"
                                 onClick={goBack}
@@ -701,34 +683,54 @@ const ExecutiveCompletePickup = () => {
                                 Back
                             </button>
                         )}
-                        <button
-                            type="button"
-                            onClick={goNext}
-                            disabled={submitting}
-                            data-testid="exec-step-next"
-                            className="flex-1 inline-flex h-12 items-center justify-center gap-2 rounded-sm bg-[#C45B38] text-sm font-medium text-[#F7F5F0] hover:bg-[#A64A2B] disabled:opacity-60 shadow-lg shadow-black/20"
-                        >
-                            {submitting ? (
-                                <>
-                                    <Loader2
-                                        size={16}
-                                        className="animate-spin"
-                                    />
-                                    Finalising...
-                                </>
-                            ) : step === "payment" ? (
-                                <>
-                                    <Check size={14} /> Mark payment received
-                                </>
-                            ) : (
-                                <>
-                                    Continue <ArrowRight size={14} />
-                                </>
-                            )}
-                        </button>
+                        {step === "payment" ? (
+                            <div className="flex-1">
+                                <SwipeToConfirm
+                                    label={
+                                        submitting
+                                            ? "Finalising..."
+                                            : `Slide to confirm ₹${pricing.total}`
+                                    }
+                                    confirmLabel="Payment received"
+                                    icon={Check}
+                                    tone="success"
+                                    disabled={submitting}
+                                    onConfirm={confirm}
+                                    testId="exec-payment-swipe"
+                                />
+                            </div>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={goNext}
+                                disabled={submitting}
+                                data-testid="exec-step-next"
+                                className="flex-1 inline-flex h-12 items-center justify-center gap-2 rounded-sm bg-[#C45B38] text-sm font-medium text-[#F7F5F0] hover:bg-[#A64A2B] disabled:opacity-60 shadow-lg shadow-black/20"
+                            >
+                                {submitting ? (
+                                    <>
+                                        <Loader2
+                                            size={16}
+                                            className="animate-spin"
+                                        />
+                                        Saving...
+                                    </>
+                                ) : (
+                                    <>
+                                        Continue <ArrowRight size={14} />
+                                    </>
+                                )}
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
+
+            <CameraCaptureDialog
+                open={cameraOpen}
+                onOpenChange={setCameraOpen}
+                onCapture={onCameraCapture}
+            />
         </div>
     );
 };

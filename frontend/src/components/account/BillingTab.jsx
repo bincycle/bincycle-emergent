@@ -18,8 +18,8 @@ import {
 export const BillingTab = () => {
     return (
         <div data-testid="account-tab-billing" className="space-y-5">
-            <header className="pb-6 mb-2 border-b border-[#D1CDBC]">
-                <h2 className="font-display text-2xl font-bold tracking-tight text-[#121710]">
+            <header className="pb-4 sm:pb-6 mb-1 sm:mb-2 border-b border-[#D1CDBC]">
+                <h2 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-[#121710]">
                     Billing
                 </h2>
                 <p className="mt-1 text-sm text-[#596155]">
@@ -31,7 +31,7 @@ export const BillingTab = () => {
             {/* Current plan */}
             <section
                 data-testid="billing-section-plan"
-                className="rounded-sm border border-[#D1CDBC] bg-[#171A15] text-[#F7F5F0] p-6 sm:p-8"
+                className="rounded-sm border border-[#D1CDBC] bg-[#171A15] text-[#F7F5F0] p-4 sm:p-6 lg:p-8"
             >
                 <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
                     <div>
@@ -80,7 +80,7 @@ export const BillingTab = () => {
             {/* Payment methods */}
             <section
                 data-testid="billing-section-methods"
-                className="rounded-sm border border-[#D1CDBC] bg-white p-6 sm:p-8"
+                className="rounded-sm border border-[#D1CDBC] bg-white p-4 sm:p-6 lg:p-8"
             >
                 <div className="flex items-start justify-between gap-4 mb-5">
                     <div>
@@ -145,7 +145,7 @@ export const BillingTab = () => {
             {/* Invoices */}
             <section
                 data-testid="billing-section-invoices"
-                className="rounded-sm border border-[#D1CDBC] bg-white p-6 sm:p-8"
+                className="rounded-sm border border-[#D1CDBC] bg-white p-4 sm:p-6 lg:p-8"
             >
                 <h3 className="font-display text-lg font-bold tracking-tight text-[#121710] mb-5">
                     Invoices &amp; receipts
@@ -227,7 +227,7 @@ export const BillingTab = () => {
             {/* Coupon history */}
             <section
                 data-testid="billing-section-coupons"
-                className="rounded-sm border border-[#D1CDBC] bg-white p-6 sm:p-8"
+                className="rounded-sm border border-[#D1CDBC] bg-white p-4 sm:p-6 lg:p-8"
             >
                 <div className="flex items-start gap-3 mb-5">
                     <span className="mt-1 inline-flex h-7 w-7 items-center justify-center rounded-sm bg-[#EDE9DC] text-[#C45B38]">

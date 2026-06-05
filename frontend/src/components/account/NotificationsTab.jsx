@@ -50,7 +50,7 @@ export const NotificationsTab = () => {
         <div data-testid="account-tab-notifications">
             <header className="flex items-start justify-between gap-4 pb-6 mb-6 border-b border-[#D1CDBC]">
                 <div>
-                    <h2 className="font-display text-2xl font-bold tracking-tight text-[#121710]">
+                    <h2 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-[#121710]">
                         Notifications
                     </h2>
                     <p className="mt-1 text-sm text-[#596155]">

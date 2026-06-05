@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { MapPin, Plus, Pencil, Trash2, Star, Check, X } from "lucide-react";
+import { MapPin, Plus, Pencil, Trash2, Star, Check, X, Crosshair } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -12,12 +12,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { getAddresses, saveAddresses } from "@/lib/accountStorage";
+import LocationPickerDialog from "@/components/LocationPickerDialog";
 
 const blankForm = {
     label: "",
     line1: "",
     city: "",
     pincode: "",
+    lat: null,
+    lng: null,
+    displayName: "",
 };
 
 const validate = (f) => {
@@ -33,12 +37,29 @@ const validate = (f) => {
 const AddressForm = ({ initial, onCancel, onSave, submitting }) => {
     const [form, setForm] = useState(initial || blankForm);
     const [errors, setErrors] = useState({});
+    const [mapOpen, setMapOpen] = useState(false);
     const onChange = (e) =>
         setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
     const submit = () => {
         const e = validate(form);
         setErrors(e);
         if (Object.keys(e).length === 0) onSave(form);
+    };
+    const applyPickedLocation = ({ lat, lng, line1, city, pincode, displayName }) => {
+        setForm((f) => ({
+            ...f,
+            lat,
+            lng,
+            displayName,
+            line1: f.line1?.trim() ? f.line1 : line1 || f.line1,
+            city: f.city?.trim() ? f.city : city || f.city,
+            pincode:
+                f.pincode?.trim() && /^\d{6}$/.test(f.pincode)
+                    ? f.pincode
+                    : pincode || f.pincode,
+        }));
+        setErrors({});
+        toast.success("Location pinned.");
     };
     return (
         <div>
@@ -135,6 +156,50 @@ const AddressForm = ({ initial, onCancel, onSave, submitting }) => {
                         </p>
                     )}
                 </div>
+                <div className="sm:col-span-2">
+                    <div className="flex items-center justify-between gap-2 rounded-sm border border-dashed border-[#D1CDBC] bg-[#F7F5F0] p-3">
+                        <div className="min-w-0 flex items-start gap-3">
+                            <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-sm bg-[#284226]/10 text-[#284226] shrink-0">
+                                <MapPin size={14} />
+                            </span>
+                            <div className="min-w-0">
+                                <p className="font-mono-label text-[10px] text-[#596155]">
+                                    Pinpoint
+                                </p>
+                                {form.lat != null && form.lng != null ? (
+                                    <>
+                                        <p
+                                            data-testid="address-form-coords"
+                                            className="text-sm text-[#121710] truncate"
+                                        >
+                                            {form.displayName ||
+                                                `${form.lat.toFixed(5)}, ${form.lng.toFixed(5)}`}
+                                        </p>
+                                        <p className="font-mono-label text-[10px] text-[#596155]">
+                                            {form.lat.toFixed(6)},{" "}
+                                            {form.lng.toFixed(6)}
+                                        </p>
+                                    </>
+                                ) : (
+                                    <p className="text-sm text-[#596155]">
+                                        No coordinates yet. Pin it on the map.
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setMapOpen(true)}
+                            data-testid="address-form-pin-on-map"
+                            className="inline-flex items-center gap-1.5 rounded-sm border border-[#121710] px-3 py-2 text-xs text-[#121710] hover:bg-[#121710] hover:text-[#F7F5F0] shrink-0"
+                        >
+                            <Crosshair size={12} />
+                            {form.lat != null
+                                ? "Adjust on map"
+                                : "Pin on map"}
+                        </button>
+                    </div>
+                </div>
             </div>
             <div className="mt-5 flex gap-2">
                 <button
@@ -155,6 +220,16 @@ const AddressForm = ({ initial, onCancel, onSave, submitting }) => {
                     <X size={14} /> Cancel
                 </button>
             </div>
+            <LocationPickerDialog
+                open={mapOpen}
+                onOpenChange={setMapOpen}
+                initial={
+                    form.lat != null && form.lng != null
+                        ? { lat: form.lat, lng: form.lng }
+                        : null
+                }
+                onConfirm={applyPickedLocation}
+            />
         </div>
     );
 };
@@ -214,7 +289,7 @@ export const AddressesTab = () => {
         <div data-testid="account-tab-addresses">
             <header className="flex items-start justify-between gap-4 pb-6 mb-6 border-b border-[#D1CDBC]">
                 <div>
-                    <h2 className="font-display text-2xl font-bold tracking-tight text-[#121710]">
+                    <h2 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-[#121710]">
                         Saved addresses
                     </h2>
                     <p className="mt-1 text-sm text-[#596155]">
@@ -304,6 +379,16 @@ export const AddressesTab = () => {
                                                 {a.line1}, {a.city} —{" "}
                                                 {a.pincode}
                                             </p>
+                                            {a.lat != null && a.lng != null && (
+                                                <p
+                                                    data-testid={`address-coords-${a.id}`}
+                                                    className="mt-1 inline-flex items-center gap-1 font-mono-label text-[10px] text-[#284226]"
+                                                >
+                                                    <Crosshair size={10} />
+                                                    {a.lat.toFixed(5)},{" "}
+                                                    {a.lng.toFixed(5)}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="flex flex-wrap items-center gap-2 sm:justify-end">

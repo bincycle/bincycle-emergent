@@ -86,33 +86,33 @@ const Account = () => {
     return (
         <div
             data-testid="account-page"
-            className="px-5 sm:px-10 lg:px-14 py-8 lg:py-12"
+            className="px-4 sm:px-8 lg:px-14 py-6 sm:py-10 lg:py-12"
         >
-            <header className="mb-10">
-                <p className="font-mono-label text-xs text-[#596155]">
+            <header className="mb-6 sm:mb-10">
+                <p className="font-mono-label text-[10px] sm:text-xs text-[#596155]">
                     [ dashboard · account ]
                 </p>
-                <h1 className="mt-3 font-display font-black tracking-tighter text-4xl sm:text-5xl text-[#121710]">
+                <h1 className="mt-2 sm:mt-3 font-display font-black tracking-tighter text-3xl sm:text-5xl text-[#121710]">
                     Your account
                 </h1>
-                <p className="mt-3 text-[#596155] max-w-2xl">
+                <p className="mt-2 sm:mt-3 text-sm sm:text-base text-[#596155] max-w-2xl">
                     Update profile details, manage addresses, tune
                     notifications, review activity and tighten security — all
                     in one place.
                 </p>
             </header>
 
-            <div className="grid gap-8 lg:grid-cols-12">
+            <div className="grid gap-5 sm:gap-6 lg:gap-8 lg:grid-cols-12">
                 {/* Settings sidebar (lg+) / horizontal scroll (mobile) */}
                 <aside
                     className="lg:col-span-3"
                     data-testid="account-settings-nav"
                 >
                     {/* Mobile / tablet — horizontal pill bar */}
-                    <div className="lg:hidden -mx-1 overflow-x-auto no-scrollbar">
+                    <div className="lg:hidden -mx-4 sm:-mx-8 overflow-x-auto no-scrollbar">
                         <div
                             role="tablist"
-                            className="flex gap-2 pb-2 px-1"
+                            className="flex gap-2 pb-2 px-4 sm:px-8"
                         >
                             {TABS.map((t) => {
                                 const Icon = t.icon;

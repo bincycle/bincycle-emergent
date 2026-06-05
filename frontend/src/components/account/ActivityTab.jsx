@@ -85,8 +85,8 @@ export const ActivityTab = () => {
 
     return (
         <div data-testid="account-tab-activity" className="space-y-5">
-            <header className="pb-6 mb-2 border-b border-[#D1CDBC]">
-                <h2 className="font-display text-2xl font-bold tracking-tight text-[#121710]">
+            <header className="pb-4 sm:pb-6 mb-1 sm:mb-2 border-b border-[#D1CDBC]">
+                <h2 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-[#121710]">
                     Activity
                 </h2>
                 <p className="mt-1 text-sm text-[#596155]">
