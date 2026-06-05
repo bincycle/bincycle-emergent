@@ -344,6 +344,7 @@ const ActionBar = ({ label, confirmLabel, icon, tone, onConfirm, testId }) => {
         <div className="fixed inset-x-0 bottom-20 z-30 px-5">
             <div className="mx-auto max-w-md">
                 <SwipeToConfirm
+                    key={testId}
                     label={label}
                     confirmLabel={confirmLabel}
                     icon={icon}

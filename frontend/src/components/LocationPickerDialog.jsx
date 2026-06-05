@@ -238,29 +238,29 @@ export const LocationPickerDialog = ({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent
                 data-testid="location-picker-dialog"
-                className="rounded-sm border-[#D1CDBC] bg-[#F7F5F0] max-w-3xl p-0 overflow-hidden"
+                className="rounded-sm border-[#D1CDBC] bg-[#F7F5F0] w-[calc(100vw-1.5rem)] sm:w-full sm:max-w-3xl p-0 overflow-hidden max-h-[92vh] sm:max-h-[88vh] flex flex-col gap-0"
             >
-                <DialogHeader className="p-5 pb-3 border-b border-[#D1CDBC]">
-                    <p className="font-mono-label text-xs text-[#596155]">
+                <DialogHeader className="p-4 sm:p-5 pb-2 sm:pb-3 border-b border-[#D1CDBC] text-left space-y-1.5">
+                    <p className="font-mono-label text-[10px] sm:text-xs text-[#596155]">
                         [ pinpoint location ]
                     </p>
-                    <DialogTitle className="font-display text-xl font-black tracking-tight text-[#121710]">
+                    <DialogTitle className="font-display text-lg sm:text-xl font-black tracking-tight text-[#121710]">
                         Pin your exact spot
                     </DialogTitle>
-                    <DialogDescription className="text-[#596155]">
+                    <DialogDescription className="hidden sm:block text-[#596155]">
                         Drag the marker or click the map to set the pickup
                         point. We'll auto-fill the address fields.
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="p-4 border-b border-[#D1CDBC] space-y-2">
-                    <div className="flex gap-2">
+                <div className="p-3 sm:p-4 border-b border-[#D1CDBC] space-y-2 shrink-0">
+                    <div className="flex flex-col sm:flex-row gap-2">
                         <button
                             type="button"
                             onClick={useCurrent}
                             disabled={locating}
                             data-testid="map-use-current-location"
-                            className="inline-flex items-center gap-2 rounded-sm bg-[#284226] px-3 py-2 text-xs font-medium text-[#F7F5F0] hover:bg-[#1C2E1A] disabled:opacity-60"
+                            className="inline-flex items-center justify-center gap-2 rounded-sm bg-[#284226] px-3 py-2 text-xs font-medium text-[#F7F5F0] hover:bg-[#1C2E1A] disabled:opacity-60 shrink-0"
                         >
                             {locating ? (
                                 <Loader2
@@ -295,7 +295,7 @@ export const LocationPickerDialog = ({
                     {results.length > 0 && (
                         <ul
                             data-testid="map-search-results"
-                            className="rounded-sm border border-[#D1CDBC] bg-white max-h-40 overflow-y-auto"
+                            className="rounded-sm border border-[#D1CDBC] bg-white max-h-32 sm:max-h-40 overflow-y-auto"
                         >
                             {results.map((r) => (
                                 <li key={r.place_id}>
@@ -315,7 +315,7 @@ export const LocationPickerDialog = ({
 
                 <div
                     data-testid="map-canvas-wrap"
-                    className="h-72 sm:h-80 relative"
+                    className="h-56 sm:h-72 lg:h-80 flex-1 min-h-[14rem] relative"
                 >
                     <MapContainer
                         center={initialCenter}
@@ -343,13 +343,13 @@ export const LocationPickerDialog = ({
                     </MapContainer>
                 </div>
 
-                <div className="p-4 border-t border-[#D1CDBC] bg-white">
+                <div className="p-3 sm:p-4 border-t border-[#D1CDBC] bg-white shrink-0">
                     <p className="font-mono-label text-[10px] text-[#596155] mb-1">
                         Selected
                     </p>
                     <p
                         data-testid="map-selected-display"
-                        className="text-sm text-[#121710] truncate"
+                        className="text-xs sm:text-sm text-[#121710] line-clamp-2"
                     >
                         {loadingDetails ? (
                             <span className="text-[#596155]">
@@ -367,12 +367,12 @@ export const LocationPickerDialog = ({
                     </p>
                 </div>
 
-                <div className="flex gap-2 p-4 bg-[#F7F5F0] border-t border-[#D1CDBC]">
+                <div className="flex gap-2 p-3 sm:p-4 bg-[#F7F5F0] border-t border-[#D1CDBC] shrink-0">
                     <button
                         type="button"
                         onClick={() => onOpenChange(false)}
                         data-testid="map-cancel"
-                        className="flex-1 inline-flex items-center justify-center gap-2 rounded-sm border border-[#121710] px-4 py-3 text-sm font-medium text-[#121710] hover:bg-[#121710] hover:text-[#F7F5F0] transition-colors"
+                        className="flex-1 inline-flex items-center justify-center gap-2 rounded-sm border border-[#121710] px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium text-[#121710] hover:bg-[#121710] hover:text-[#F7F5F0] transition-colors"
                     >
                         <X size={14} /> Cancel
                     </button>
@@ -380,7 +380,7 @@ export const LocationPickerDialog = ({
                         type="button"
                         onClick={confirm}
                         data-testid="map-confirm"
-                        className="flex-1 inline-flex items-center justify-center gap-2 rounded-sm bg-[#284226] px-4 py-3 text-sm font-medium text-[#F7F5F0] hover:bg-[#1C2E1A] transition-colors"
+                        className="flex-1 inline-flex items-center justify-center gap-2 rounded-sm bg-[#284226] px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium text-[#F7F5F0] hover:bg-[#1C2E1A] transition-colors"
                     >
                         <Check size={14} /> Use this location
                     </button>
